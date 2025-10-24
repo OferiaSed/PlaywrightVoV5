@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "test:qa": "playwright test --headed --workers=3 --project=qa1",
+    "test:qa1": "playwright test --headed  --project=qa1",
+    "test:qa2": "playwright test --headed  --project=qa2",
     "test:demo": "playwright test --headed --workers=3 --project=demo",
     "test:proto": "playwright test --headed --workers=3 --project=proto",
     "test:preprod": "playwright test --headed --workers=3 --project=preprod",

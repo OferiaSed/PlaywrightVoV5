@@ -27,7 +27,6 @@ export default defineConfig({
     timeout: 10000,
   },
   use: {
-    baseURL: environments[environment]?.baseUrl || environments.qa1.baseUrl,
     trace: 'on',
     actionTimeout: environments[environment]?.timeout || 30000,
     navigationTimeout: environments[environment]?.timeout || 30000,

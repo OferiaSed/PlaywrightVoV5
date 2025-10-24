@@ -5,7 +5,7 @@ export class EnvironmentHelper {
   private currentEnvironment: Environment;
 
   private constructor() {
-    const env = process.env.ENVIRONMENT || 'qa2';
+    const env = process.env.ENVIRONMENT || 'qa1';
     this.currentEnvironment = getEnvironment(env);
   }
 

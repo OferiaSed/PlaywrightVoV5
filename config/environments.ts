@@ -13,7 +13,7 @@ export interface Environment {
  */
 export const environments: Record<string, Environment> = {
   qa1: {
-    name: 'q1',
+    name: 'QA1',
     dataDriver: 'DataDriverVovQA.xlsx',
     baseUrl: 'https://qa1.viaone.com/',
     timeout: 30000,
