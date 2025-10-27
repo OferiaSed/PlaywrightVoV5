@@ -27,6 +27,10 @@ export class CustomClaimHeader extends BasePage {
         return this.getClaimFieldLocator(fieldName).nth(1);
     }
 
+    getClaimFieldValueLocator(fieldName: string): Locator {
+        return this.getClaimFieldValue(fieldName);
+    }
+
     private get startIcon(): Locator {
         return this.page.getByRole('link', { name: 'Watching click to remove from watchlist'});
     }
@@ -59,15 +63,24 @@ export class CustomClaimHeader extends BasePage {
     }    
 
     //--------------------------------------------------------------------------------------------
-    // Disability Claim Header Specific Locators
+    // LOB-Specific Claim Header Locators (Disability and Leave)
     //--------------------------------------------------------------------------------------------
 
     private get customizeHeaderPopup(): Locator {
-        return this.page.locator('//div[@role="dialog" and contains(., "Configure disability header")]');
+        return this.page.locator('//div[@role="dialog" and (contains(., "Configure disability header") or contains(., "Configure leave header"))]');
     }
 
     private get customizeHeaderTitle(): Locator {
-        return this.page.locator('//*[text()="Configure disability header"]');
+        return this.page.locator('//*[text()="Configure disability header" or text()="Configure leave header"]');
+    }
+
+    // Leave-specific locators
+    private get leaveCustomizeHeaderPopup(): Locator {
+        return this.page.locator('//div[@role="dialog" and contains(., "Configure leave header")]');
+    }
+
+    private get leaveCustomizeHeaderTitle(): Locator {
+        return this.page.locator('//*[text()="Configure leave header"]');
     }
 
     private get availableFieldsList(): Locator {
@@ -166,6 +179,30 @@ export class CustomClaimHeader extends BasePage {
         await this.validateFieldIsNotVisible('Last worked');
     }
 
+    @step('Validate Default Leave Claim Header Fields')
+    async validateDefaultLeaveClaimHeaderFields() {
+        // Validate default fields are visible for Leave claims
+        await this.validateFieldIsVisible('Status');
+        await this.validateFieldIsVisible('Case Type');
+        await this.validateFieldIsVisible('Date Begin');
+        await this.validateFieldIsVisible('Date End');
+        await this.validateFieldIsVisible('Examiner');
+        
+        // Validate additional fields are not visible by default
+        await this.validateFieldIsNotVisible('Examiner phone number');
+        await this.validateFieldIsNotVisible('Work state/province');
+        await this.validateFieldIsNotVisible('Relationship');
+        await this.validateFieldIsNotVisible('Caring for');
+        await this.validateFieldIsNotVisible('Gender');
+        await this.validateFieldIsNotVisible('Hours worked in last 12 months');
+        await this.validateFieldIsNotVisible('Months of service');
+        await this.validateFieldIsNotVisible('Phone #');
+        await this.validateFieldIsNotVisible('Spouse at same client');
+        await this.validateFieldIsNotVisible('SSN');
+        await this.validateFieldIsNotVisible('Contract #');
+        await this.validateFieldIsNotVisible('Client');
+    }
+
     @step('Validate Status Color Coding')
     async validateStatusColorCoding(status: string) {
         const fieldLabel = this.getHeaderLabelName('Status');
@@ -226,6 +263,12 @@ export class CustomClaimHeader extends BasePage {
         await expect(this.customizeHeaderTitle, 'Popup title should be "Configure disability header"').toBeVisible();
     }
 
+    @step('Validate Leave Customization Popup is Open')
+    async validateLeaveCustomizationPopupIsOpen() {
+        await expect(this.leaveCustomizeHeaderPopup, 'Leave customization popup should be visible').toBeVisible();
+        await expect(this.leaveCustomizeHeaderTitle, 'Popup title should be "Configure leave header"').toBeVisible();
+    }
+
     @step('Validate Customization Popup is Closed')
     async validateCustomizationPopupIsClosed() {
         await expect(this.customizeHeaderPopup, 'Customization popup should not be visible').not.toBeVisible();
@@ -272,6 +315,12 @@ export class CustomClaimHeader extends BasePage {
     async openCustomizationPopup() {
         await this.clickPencilIcon();
         await this.validateCustomizationPopupIsOpen();
+    }
+
+    @step('Open Leave Customization Popup')
+    async openLeaveCustomizationPopup() {
+        await this.clickPencilIcon();
+        await this.validateLeaveCustomizationPopupIsOpen();
     }
 
     @step('Close Customization Popup')
@@ -344,6 +393,29 @@ export class CustomClaimHeader extends BasePage {
     async customizeHeaderWithFields(fieldsToAdd: string[], fieldsToRemove: string[] = [], restoreDefaultFields = true, saveChanges = true) {
         // Restore Defaults Options
         await this.openCustomizationPopup();
+        if( restoreDefaultFields ){ 
+            await this.restoreDefaultFields(); 
+        }
+        
+        // Add fields
+        for (const field of fieldsToAdd) {
+            await this.addFieldToHeader(field);
+        }
+        
+        // Remove fields
+        for (const field of fieldsToRemove) {
+            await this.removeFieldFromHeader(field);
+        }
+        
+        if(saveChanges){
+            await this.saveCustomizationChanges();
+        }
+    }
+
+    @step('Customize Leave Header with Fields')
+    async customizeLeaveHeaderWithFields(fieldsToAdd: string[], fieldsToRemove: string[] = [], restoreDefaultFields = true, saveChanges = true) {
+        // Restore Defaults Options
+        await this.openLeaveCustomizationPopup();
         if( restoreDefaultFields ){ 
             await this.restoreDefaultFields(); 
         }
@@ -458,6 +530,217 @@ export class CustomClaimHeader extends BasePage {
         await expect(this.errorRequiredMessage, 'Error Required: At least one field selected should be visible').toBeVisible();
     }
 
+    //--------------------------------------------------------------------------------------------
+    // Leave-Specific Validation Methods
+    //--------------------------------------------------------------------------------------------
 
+    @step('Validate Leave Status Color Coding')
+    async validateLeaveStatusColorCoding(status: string) {
+        const fieldLabel = this.getHeaderLabelName('Status');
+        const fieldValue = this.getClaimFieldValue('Status');
+        
+        await expect(fieldLabel, 'Status box should be visible').toBeVisible();
+        await expect(fieldValue, 'Status value should be visible').toBeVisible();
+        
+        // Validate color coding based on Leave status
+        if (status.toLowerCase().includes('open')) {
+            await expect.soft(fieldValue, 'Open status should have green color').toHaveCSS('background-color', 'rgb(10, 133, 125)');
+        } else if (status.toLowerCase().includes('closed')) {
+            await expect.soft(fieldValue, 'Closed status should have red color').toHaveCSS('background-color', 'rgb(210, 40, 40)');
+        }
+    }
+
+    @step('Validate Leave Case Type Format')
+    async validateLeaveCaseTypeFormat() {
+        const caseTypeValue = this.getClaimFieldValue('Case Type');
+        const caseTypeText = await caseTypeValue.textContent();
+        
+        // Validate Case Type format (e.g., Intermittent, Continuous, Reduced Work Schedule)
+        expect(caseTypeText?.trim(), 'Case Type should display valid format').toMatch(/^(Intermittent|Continuous|Reduced Work Schedule)$/);
+    }
+
+    @step('Validate Leave Date Format')
+    async validateLeaveDateFormat(fieldName: string) {
+        const fieldLabel = this.getHeaderLabelName(fieldName);
+        const fieldValue = this.getClaimFieldValue(fieldName);
+        
+        await expect(fieldLabel, `${fieldName} field should be visible`).toBeVisible();
+        await expect(fieldValue, `${fieldName} value should be visible`).toBeVisible();
+
+        const dateText = await fieldValue.textContent();
+        const dateTrimmed = dateText?.trim();
+
+        // Validate MM/DD/YYYY format
+        const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+        await fieldValue.highlight();
+        expect(dateTrimmed, `${fieldName} should be in MM/DD/YYYY format`).toMatch(dateRegex);
+    }
+
+    @step('Validate Leave Examiner Name Format')
+    async validateLeaveExaminerNameFormat() {
+        const examinerValue = this.getClaimFieldValue('Examiner');
+        const examinerText = await examinerValue.textContent();
+        
+        // Should display FIRST and LAST NAME, not be a hyperlink
+        expect(examinerText?.trim(), 'Leave Examiner should display first and last name').toMatch(/^[A-Za-z]+(\s+[A-Za-z]+)+$/);
+        
+        // Should not be a hyperlink
+        const examinerLink = this.page.locator('//app-claim-header//div[div[contains(text(), "Examiner")]]//a');
+        await expect(examinerLink, 'Leave Examiner should not be a hyperlink').not.toBeVisible();
+    }
+
+    @step('Validate Leave Breadcrumbs Display')
+    async validateLeaveBreadcrumbsDisplay(claimNumber: string) {
+        // Try multiple possible breadcrumb locators
+        const breadcrumbSelectors = [
+            '//div[contains(@class, "breadcrumb")]',
+            '//div[contains(@class, "breadcrumbs")]',
+            '//nav[contains(@class, "breadcrumb")]',
+            '//nav[contains(@class, "breadcrumbs")]',
+            '//div[contains(@class, "tw-flex") and contains(., "View")]',
+            '//div[contains(text(), "View")]'
+        ];
+        
+        let breadcrumbs: Locator | null = null;
+        for (const selector of breadcrumbSelectors) {
+            const locator = this.page.locator(selector);
+            if (await locator.isVisible()) {
+                breadcrumbs = locator;
+                break;
+            }
+        }
+        
+        expect(breadcrumbs, 'Breadcrumbs should be visible').not.toBeNull();
+        
+        // Validate breadcrumb format: "View / Claim Number"
+        if (breadcrumbs) {
+            const breadcrumbText = await breadcrumbs.textContent();
+            expect(breadcrumbText, 'Breadcrumbs should display "View / Claim Number" format').toMatch(/View\s*\/\s*.*/);
+            
+            // Validate View is a hyperlink - try multiple approaches
+            const viewLinkSelectors = [
+                'a[contains(text(), "View")]',
+                'a[contains(., "View")]',
+                '//a[contains(text(), "View")]',
+                '//button[contains(text(), "View")]'
+            ];
+            
+            let viewLink: Locator | null = null;
+            for (const selector of viewLinkSelectors) {
+                const link = breadcrumbs.locator(selector);
+                if (await link.isVisible()) {
+                    viewLink = link;
+                    break;
+                }
+            }
+            
+            expect(viewLink, 'View should be a hyperlink').not.toBeNull();
+        }
+    }
+
+    @step('Validate Leave Employee Information Display')
+    async validateLeaveEmployeeInformationDisplay(employeeId: string, employeeName: string) {
+        // Validate Employee ID display
+        const employeeIdField = this.page.locator(`//div[contains(text(), "Employee ID:")]`);
+        await expect(employeeIdField, 'Employee ID should be visible').toBeVisible();
+        
+        // Validate Employee Name display (format = First Last)
+        const employeeNameField = this.page.locator(`//div[contains(text(), "${employeeName}")]`);
+        await expect(employeeNameField, 'Employee Name should be visible').toBeVisible();
+        
+        // Validate name format (First Last, both capitalized)
+        expect(employeeName, 'Employee name should be in First Last format').toMatch(/^[A-Z][a-z]+\s+[A-Z][a-z]+$/);
+    }
+
+    @step('Validate Leave Line of Business Display')
+    async validateLeaveLineOfBusinessDisplay(lobText: string) {
+        const lobField = this.page.locator(`//div[contains(text(), "${lobText}")]`);
+        await expect(lobField, 'Line of Business should be visible').toBeVisible();
+        
+        // Validate it's displayed in gray font and left justified
+        const lobStyle = await lobField.evaluate(el => window.getComputedStyle(el));
+        expect(lobStyle.color, 'Line of Business should be in gray font').toMatch(/rgb\(128,\s*128,\s*128\)|gray/);
+    }
+
+    @step('Validate Leave Claim Number Display')
+    async validateLeaveClaimNumberDisplay(claimNumber: string) {
+        const claimNumberField = this.page.locator(`//div[contains(text(), "${claimNumber}")]`);
+        await expect(claimNumberField, 'Claim Number should be visible').toBeVisible();
+        
+        // Validate it's displayed in bold and larger font
+        const claimStyle = await claimNumberField.evaluate(el => window.getComputedStyle(el));
+        expect(claimStyle.fontWeight, 'Claim Number should be bold').toBe('bold');
+        
+        // Validate star icon is present for watchlist
+        const starIcon = this.page.locator('//a[contains(@aria-label, "Watching") or contains(@aria-label, "watchlist")]');
+        await expect(starIcon, 'Star icon for watchlist should be visible').toBeVisible();
+        
+        // Validate glasses icon is present
+        const glassesIcon = this.page.locator('//button[contains(@aria-label, "Search") or contains(@class, "search")]');
+        await expect(glassesIcon, 'Glasses icon for search should be visible').toBeVisible();
+    }
+
+    @step('Validate Leave Additional Fields Format')
+    async validateLeaveAdditionalFieldsFormat() {
+        // Validate specific field formats for Leave claims
+        const fieldFormats = {
+            'Examiner phone number': /^\d{3}-\d{3}-\d{4}\s+X\d{5}$/,
+            'Work state/province': /^[A-Z]{2}$/,
+            'Phone #': /^\d{3}-\d{3}-\d{4}$/,
+            'Hours worked in last 12 months': /^\d+\.?\d*$/,
+            'Months of service': /^\d+$/,
+            'Spouse at same client': /^(Yes|No)$/
+        };
+
+        for (const [fieldName, format] of Object.entries(fieldFormats)) {
+            if (await this.getHeaderLabelName(fieldName).isVisible()) {
+                const fieldValue = this.getClaimFieldValue(fieldName);
+                const fieldText = await fieldValue.textContent();
+                expect(fieldText?.trim(), `${fieldName} should match expected format`).toMatch(format);
+            }
+        }
+    }
+
+    @step('Validate Leave SSN Masking')
+    async validateLeaveSSNMasking() {
+        const ssnField = this.getClaimFieldValue('SSN');
+        const ssnText = await ssnField.textContent();
+        
+        // Validate SSN is masked (format: XXX-XX-XXXX)
+        expect(ssnText?.trim(), 'SSN should be masked').toMatch(/^\*{3}-\*{2}-\*{4}$/);
+        
+        // Validate eye icon is present for unmasking
+        const eyeIcon = this.page.locator('//button[contains(@aria-label, "unmask") or contains(@class, "eye")]');
+        await expect(eyeIcon, 'Eye icon for SSN unmasking should be visible').toBeVisible();
+    }
+
+    @step('Click View Hyperlink')
+    async clickViewHyperlink() {
+        // Try multiple approaches to find and click the View link
+        const viewLinkSelectors = [
+            '//a[contains(text(), "View")]',
+            '//button[contains(text(), "View")]',
+            '//div[contains(@class, "breadcrumb")]//a[contains(text(), "View")]',
+            '//div[contains(@class, "breadcrumbs")]//a[contains(text(), "View")]'
+        ];
+        
+        let viewLink: Locator | null = null;
+        for (const selector of viewLinkSelectors) {
+            const link = this.page.locator(selector).first();
+            if (await link.isVisible()) {
+                viewLink = link;
+                break;
+            }
+        }
+        
+        expect(viewLink, 'View hyperlink should be visible').not.toBeNull();
+        if (viewLink) {
+            await viewLink.click();
+        }
+    }
+
+    getSSNEyeIconLocator(): Locator {
+        return this.page.locator('//button[contains(@aria-label, "unmask") or contains(@class, "eye")]');
+    }
 
 }

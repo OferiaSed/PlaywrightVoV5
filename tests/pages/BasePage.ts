@@ -101,7 +101,11 @@ export class BasePage{
         }
     }
 
-
+    async getDicTableHeaders(){
+        const headers = this.page.locator('thead th');
+        const count =  await headers.count();
+        
+    }
 
 
 

@@ -35,44 +35,13 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'qa1',
+      name: 'QA',
       use: { 
         ...devices['Desktop Chrome'],
         baseURL: environments.qa1.baseUrl,
         headless: environments.qa1.headless,
         viewport: { width: 1500, height:1000},
       },
-    },
-
-    {
-      name: 'qa2',
-      use: { 
-        ...devices['Desktop Chrome'],
-        baseURL: environments.qa2.baseUrl,
-        headless: environments.qa2.headless,
-        viewport: { width: 1500, height:1000},
-      },
-    },
-
-    {
-      name: 'preprod',
-      use: { 
-        ...devices['Desktop Chrome'],
-        baseURL: environments.preprod.baseUrl,
-        headless: environments.preprod.headless,
-        viewport: { width: 1500, height:1000},
-      },
-    },
-
-    {
-      name: 'demo',
-      use: { 
-        ...devices['Desktop Chrome'],
-        baseURL: environments.demo.baseUrl,
-        headless: environments.demo.headless,
-        viewport: { width: 1500, height:1000},
-      },
-    },
-    
+    },    
   ],
 });

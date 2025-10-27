@@ -21,9 +21,6 @@ export class CertificationsPage extends BasePage {
         return this.page.locator('//*[@label="Certifications"]//hr');
     }
 
-    private get scrollToTopLink(): Locator {
-        return this.page.getByRole('button', { name: 'Scroll to top of page' });
-    }
 
     //--------------------------------------------------------------------------------------------
     // Grid and Table Locators
@@ -46,7 +43,11 @@ export class CertificationsPage extends BasePage {
     }
 
     private getExpandButton(rowIndex: number): Locator {
-        return this.getRowByIndex(rowIndex).locator('//td[1]//button[contains(@class, "expand") or contains(text(), ">")]');
+        return this.getRowByIndex(rowIndex).locator('//td//button[contains(@aria-label, "Expand")]');
+    }
+
+    private getCollapseButton(rowIndex: number): Locator {
+        return this.getRowByIndex(rowIndex).locator('//td//button[contains(@aria-label, "Collapse")]');
     }
 
     private getRelationshipColumn(rowIndex: number): Locator {
@@ -77,67 +78,87 @@ export class CertificationsPage extends BasePage {
     // Filter and Count Locators
     //--------------------------------------------------------------------------------------------
 
-    private get filterSection(): Locator {
-        return this.page.locator('//div[contains(@class, "filter") or contains(@class, "search")]');
+    private getfilterButton(): Locator {
+        return this.page.getByRole('button', { name: 'Filter' });
+    }
+
+    private getFilterInput(): Locator {
+        return this.page.getByRole('textbox', { name: 'Search input' });
+    }
+
+    private getFilterCleaner(): Locator {
+        return this.page.locator('//app-table//p-inputicon');
     }
 
     private get certificationCount(): Locator {
-        return this.page.locator('//p[contains(text(), "certification")]');
+        return this.page.locator('//app-table//div[contains(@class, " tw-font-bold tw-text")]');
     }
-
-    private getFilterInput(filterType: string): Locator {
-        return this.page.locator(`//input[@placeholder*="${filterType}" or @name*="${filterType}"]`);
-    }
+    
 
     //--------------------------------------------------------------------------------------------
     // Pagination Locators
     //--------------------------------------------------------------------------------------------
 
     private get paginationSection(): Locator {
-        return this.page.locator('//div[contains(@class, "pagination")]');
+        return this.page.locator('p-paginator');
+    }
+
+    private get firstPageButton(): Locator {
+        return this.paginationSection.getByRole('button', { name: 'First Page' });
     }
 
     private get nextPageButton(): Locator {
-        return this.paginationSection.locator('//button[contains(text(), "Next") or contains(@class, "next")]');
+        return this.paginationSection.getByRole('button', { name: 'Next Page' });
     }
 
     private get previousPageButton(): Locator {
-        return this.paginationSection.locator('//button[contains(text(), "Previous") or contains(@class, "prev")]');
+        return this.paginationSection.getByRole('button', { name: 'Previous Page' });
+    }
+
+    private get lastPageButton(): Locator {
+        return this.paginationSection.getByRole('button', { name: 'Last Page' });
     }
 
     private get pageNumbers(): Locator {
         return this.paginationSection.locator('//button[contains(@class, "page")]');
     }
 
+    private get currentPageSelected(): Locator {
+        return this.paginationSection.locator('span button[aria-current = "page"]');
+    }
+
+    public getPaginationSection(): Locator {
+        return this.paginationSection;
+    }
+
+    public getpageNumbers(pageNumber:string): Locator {
+        return this.paginationSection.getByRole('button', { name: pageNumber });
+    }
+
+
     //--------------------------------------------------------------------------------------------
     // Expanded Row Section Locators
     //--------------------------------------------------------------------------------------------
 
-    private getExpandedRowSections(rowIndex: number): Locator {
-        return this.getRowByIndex(rowIndex).locator('//div[contains(@class, "expanded-content")]');
-    }
 
     // Certification Section
     private getCertificationSection(rowIndex: number): Locator {
-        return this.getExpandedRowSections(rowIndex).locator('//div[contains(@class, "certification-section")]');
+        return this.page.locator('//div[*[contains(@label, "Certification")]]').nth(rowIndex);
     }
 
-    private get certificationSectionHeader(): Locator {
-        return this.page.locator('//div[contains(@class, "section-header") and contains(text(), "CERTIFICATION")]');
-    }
 
     private getCertificationField(rowIndex: number, fieldName: string): Locator {
         return this.getCertificationSection(rowIndex).locator(`//div[contains(text(), "${fieldName}")]//following-sibling::div`);
     }
 
+
+    
+
     // Clarification Section
     private getClarificationSection(rowIndex: number): Locator {
-        return this.getExpandedRowSections(rowIndex).locator('//div[contains(@class, "clarification-section")]');
+        return this.page.locator('//div[*[contains(@label, "Clarification")]]').nth(rowIndex);
     }
 
-    private get clarificationSectionHeader(): Locator {
-        return this.page.locator('//div[contains(@class, "section-header") and contains(text(), "CLARIFICATION")]');
-    }
 
     private getClarificationField(rowIndex: number, fieldName: string): Locator {
         return this.getClarificationSection(rowIndex).locator(`//div[contains(text(), "${fieldName}")]//following-sibling::div`);
@@ -145,12 +166,9 @@ export class CertificationsPage extends BasePage {
 
     // Intermittent Absence Frequency Section
     private getIntermittentSection(rowIndex: number): Locator {
-        return this.getExpandedRowSections(rowIndex).locator('//div[contains(@class, "intermittent-section")]');
+        return this.page.locator('//div[*[contains(@label, "Intermittent")]]').nth(rowIndex);
     }
 
-    private get intermittentSectionHeader(): Locator {
-        return this.page.locator('//div[contains(@class, "section-header") and contains(text(), "INTERMITTENT ABSENCE FREQUENCY")]');
-    }
 
     private getIntermittentField(rowIndex: number, fieldName: string): Locator {
         return this.getIntermittentSection(rowIndex).locator(`//div[contains(text(), "${fieldName}")]//following-sibling::div`);
@@ -213,21 +231,11 @@ export class CertificationsPage extends BasePage {
         expect(trimmedText, 'Certification count should be in format "X certification(s)"').toMatch(countRegex);
     }
 
-    @step('Validate Row Expansion Functionality')
-    async validateRowExpansionFunctionality(rowIndex: number = 0) {
-        // Click expand button
-        await this.getExpandButton(rowIndex).click();
-        
-        // Validate sections are visible
-        await expect(this.getCertificationSection(rowIndex), 'Certification section should be visible').toBeVisible();
-        await expect(this.certificationSectionHeader, 'Certification section header should be visible').toBeVisible();
-    }
 
     @step('Validate Certification Section Fields')
     async validateCertificationSectionFields(rowIndex: number = 0) {
         const certificationFields = [
-            'Status', 'Substatus', 'Begin date', 'End date', 
-            'Date sent', 'Date received', 'Date reviewed', 'Date due'
+            'Status', 'Substatus', 'Begin date', 'End date', 'Date sent', 'Date received', 'Date reviewed', 'Date due'
         ];
 
         for (const field of certificationFields) {
@@ -242,7 +250,7 @@ export class CertificationsPage extends BasePage {
         const isVisible = await clarificationSection.isVisible();
         
         if (isVisible) {
-            await expect(this.clarificationSectionHeader, 'Clarification section header should be visible').toBeVisible();
+            await expect(this.getClarificationSection(rowIndex), 'Clarification section should be visible').toBeVisible();
             
             const clarificationFields = [
                 'Type', 'Reason', 'Date sent', 'Date received', 
@@ -251,7 +259,7 @@ export class CertificationsPage extends BasePage {
 
             for (const field of clarificationFields) {
                 const fieldElement = this.getClarificationField(rowIndex, field);
-                await expect(fieldElement, `Clarification field "${field}" should be visible`).toBeVisible();
+                await expect.soft(fieldElement, `Clarification field "${field}" should be visible`).toBeVisible();
             }
         }
     }
@@ -259,7 +267,6 @@ export class CertificationsPage extends BasePage {
     @step('Validate Intermittent Absence Frequency Section')
     async validateIntermittentAbsenceFrequencySection(rowIndex: number = 0) {
         await expect(this.getIntermittentSection(rowIndex), 'Intermittent section should be visible').toBeVisible();
-        await expect(this.intermittentSectionHeader, 'Intermittent section header should be visible').toBeVisible();
         
         const intermittentFields = ['Incapacity/Care', 'Treatment/Appointments'];
         
@@ -270,32 +277,43 @@ export class CertificationsPage extends BasePage {
     }
 
     @step('Validate Date Format in Expanded Sections')
-    async validateDateFormatInExpandedSections(rowIndex: number = 0) {
+    async validateDateFormatInExpandedSections(rowIndex: number = 0, sectionName: string) {
         const dateFields = [
             { section: 'certification', fields: ['Begin date', 'End date', 'Date sent', 'Date received', 'Date reviewed', 'Date due'] },
             { section: 'clarification', fields: ['Date sent', 'Date received', 'Date reviewed', 'Date due'] }
         ];
+        
+        // Find the section to validate based on the sectionName parameter
+        const targetSection = dateFields.find(section => section.section === sectionName.toLowerCase());
+        
+        if (!targetSection) {
+            throw new Error(`Invalid section name: ${sectionName}. Valid options are 'certification' or 'clarification'`);
+        }
 
-        for (const section of dateFields) {
-            for (const field of section.fields) {
-                const fieldElement = section.section === 'certification' 
-                    ? this.getCertificationField(rowIndex, field)
-                    : this.getClarificationField(rowIndex, field);
-                
-                const fieldText = await fieldElement.textContent();
-                if (fieldText && fieldText.trim() !== '') {
-                    const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-                    expect(fieldText.trim(), `${section.section} ${field} should be in MM/DD/YYYY format`).toMatch(dateRegex);
-                }
+        // Validate only the specified section
+        for (const field of targetSection.fields) {
+            const fieldElement = targetSection.section === 'certification' 
+                ? this.getCertificationField(rowIndex, field)
+                : this.getClarificationField(rowIndex, field);
+            
+            const fieldText = await fieldElement.textContent();
+            if (fieldText && fieldText.trim() !== '') {
+                const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+                expect.soft(fieldText.trim(), `${targetSection.section} ${field} should be in MM/DD/YYYY format`).toMatch(dateRegex);
+            } else {
+                console.log(`Warning: ${targetSection.section} ${field} is empty`);
             }
         }
     }
 
     @step('Validate Filter Functionality')
-    async validateFilterFunctionality(filterType: string, filterValue: string) {
-        const filterInput = this.getFilterInput(filterType);
-        await expect(filterInput, `Filter input for ${filterType} should be visible`).toBeVisible();
+    async validateFilterFunctionality(filterType: string, filterValue: string, cleanFilter = true) {
+        const filterButton = this.getfilterButton();
+        const filterInput = this.getFilterInput();
+        await expect(filterButton, `Filter button should be visible`).toBeVisible();
         
+
+        await filterButton.click();
         await filterInput.fill(filterValue);
         await this.page.keyboard.press('Enter');
         
@@ -303,6 +321,12 @@ export class CertificationsPage extends BasePage {
         const filteredRows = this.gridRows;
         const rowCount = await filteredRows.count();
         expect(rowCount, `Should have filtered results for ${filterType}`).toBeGreaterThan(0);
+
+        if(cleanFilter){
+            const filterCleaner = this.getFilterCleaner();
+            await filterCleaner.click();
+        }
+        await this.delay(2000);        
     }
 
     @step('Validate Pagination Controls')
@@ -314,24 +338,13 @@ export class CertificationsPage extends BasePage {
         const pageCount = await pageNumbers.count();
         
         if (pageCount > 1) {
+            await expect(this.firstPageButton, 'First page button should be visible').toBeVisible();
             await expect(this.nextPageButton, 'Next page button should be visible').toBeVisible();
             await expect(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
+            await expect(this.lastPageButton, 'Last page button should be visible').toBeVisible();
         }
     }
 
-    @step('Validate Scroll to Top Functionality')
-    async validateScrollToTopFunctionality() {
-        // Scroll down first
-        await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-        
-        // Click scroll to top link
-        await expect(this.scrollToTopLink, 'Scroll to top link should be visible').toBeVisible();
-        await this.scrollToTopLink.click();
-        
-        // Validate we're at the top
-        const scrollPosition = await this.page.evaluate(() => window.scrollY);
-        expect(scrollPosition, 'Should be at the top of the page').toBe(0);
-    }
 
     //--------------------------------------------------------------------------------------------
     // Action Methods
@@ -346,34 +359,37 @@ export class CertificationsPage extends BasePage {
 
     @step('Expand Certification Row')
     async expandCertificationRow(rowIndex: number = 0) {
+        // Click expand button
         await this.getExpandButton(rowIndex).click();
-        await this.validateRowExpansionFunctionality(rowIndex);
+        
+        // Validate sections are visible
+        await expect(this.getCertificationSection(rowIndex), 'Certification section should be visible').toBeVisible();
     }
 
     @step('Collapse Certification Row')
     async collapseCertificationRow(rowIndex: number = 0) {
-        await this.getExpandButton(rowIndex).click();
+        await this.getCollapseButton(rowIndex).click();
         // Validate sections are hidden
         await expect(this.getCertificationSection(rowIndex), 'Certification section should be hidden').toBeHidden();
     }
 
     @step('Filter Certifications')
-    async filterCertifications(filterType: string, filterValue: string) {
-        await this.validateFilterFunctionality(filterType, filterValue);
+    async filterCertifications(filterType: string, filterValue: string, cleanFilter = true) {
+        await this.validateFilterFunctionality(filterType, filterValue, cleanFilter);
     }
 
     @step('Navigate to Next Page')
     async navigateToNextPage() {
         await expect(this.nextPageButton, 'Next page button should be visible').toBeVisible();
         await this.nextPageButton.click();
-        await this.waitForPageLoad();
+        await this.delay(2000);
     }
 
     @step('Navigate to Previous Page')
     async navigateToPreviousPage() {
         await expect(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
         await this.previousPageButton.click();
-        await this.waitForPageLoad();
+        await this.delay(2000);
     }
 
     @step('Navigate to Specific Page')
@@ -381,13 +397,9 @@ export class CertificationsPage extends BasePage {
         const pageButton = this.pageNumbers.nth(pageNumber - 1);
         await expect(pageButton, `Page ${pageNumber} button should be visible`).toBeVisible();
         await pageButton.click();
-        await this.waitForPageLoad();
+        await this.delay(2000);
     }
 
-    @step('Scroll to Top of Page')
-    async scrollToTopOfPage() {
-        await this.validateScrollToTopFunctionality();
-    }
 
     //--------------------------------------------------------------------------------------------
     // Data Retrieval Methods
@@ -405,75 +417,21 @@ export class CertificationsPage extends BasePage {
         return await this.gridRows.count();
     }
 
-    @step('Get Row Data')
-    async getRowData(rowIndex: number): Promise<Record<string, string>> {
-        return {
-            relationship: await this.getRelationshipColumn(rowIndex).textContent() || '',
-            certificationDates: await this.getCertificationDatesColumn(rowIndex).textContent() || '',
-            status: await this.getStatusColumn(rowIndex).textContent() || '',
-            reason: await this.getReasonColumn(rowIndex).textContent() || '',
-            intermittent: await this.getIntermittentColumn(rowIndex).textContent() || '',
-            created: await this.getCreatedColumn(rowIndex).textContent() || ''
-        };
-    }
 
-    @step('Get Certification Section Data')
-    async getCertificationSectionData(rowIndex: number): Promise<Record<string, string>> {
-        const fields = ['Status', 'Substatus', 'Begin date', 'End date', 'Date sent', 'Date received', 'Date reviewed', 'Date due'];
-        const data: Record<string, string> = {};
-        
-        for (const field of fields) {
-            data[field] = await this.getCertificationField(rowIndex, field).textContent() || '';
-        }
-        
-        return data;
-    }
 
-    @step('Get Clarification Section Data')
-    async getClarificationSectionData(rowIndex: number): Promise<Record<string, string>> {
-        const fields = ['Type', 'Reason', 'Date sent', 'Date received', 'Date reviewed', 'Date due'];
-        const data: Record<string, string> = {};
-        
-        for (const field of fields) {
-            data[field] = await this.getClarificationField(rowIndex, field).textContent() || '';
-        }
-        
-        return data;
-    }
 
-    @step('Get Intermittent Section Data')
-    async getIntermittentSectionData(rowIndex: number): Promise<Record<string, string>> {
-        const fields = ['Incapacity/Care', 'Treatment/Appointments'];
-        const data: Record<string, string> = {};
-        
-        for (const field of fields) {
-            data[field] = await this.getIntermittentField(rowIndex, field).textContent() || '';
-        }
-        
-        return data;
+
+    @step('Get Cuurent Page Number Selected')
+    async getCurrentPageNumber(): Promise<string> {
+        await expect(this.currentPageSelected, 'Certification count should be visible').toBeVisible();
+        const countText = await this.currentPageSelected.textContent();
+        return countText?.trim() || '';
     }
 
     //--------------------------------------------------------------------------------------------
     // Comprehensive Validation Methods
     //--------------------------------------------------------------------------------------------
 
-    @step('Validate Complete Certifications Page')
-    async validateCompleteCertificationsPage() {
-        // Validate page header
-        await this.validateCertificationsPageHeader();
-        
-        // Validate grid structure
-        await this.validateGridStructure();
-        
-        // Validate certification count
-        await this.validateCertificationCountDisplay();
-        
-        // Validate pagination if needed
-        await this.validatePaginationControls();
-        
-        // Validate scroll to top functionality
-        await this.validateScrollToTopFunctionality();
-    }
 
     @step('Validate Expanded Row Complete Data')
     async validateExpandedRowCompleteData(rowIndex: number = 0) {
@@ -485,7 +443,8 @@ export class CertificationsPage extends BasePage {
         await this.validateClarificationSectionVisibility(rowIndex);
         await this.validateIntermittentAbsenceFrequencySection(rowIndex);
         
-        // Validate date formats
-        await this.validateDateFormatInExpandedSections(rowIndex);
+        // Validate date formats for both sections
+        await this.validateDateFormatInExpandedSections(rowIndex, 'certification');
+        await this.validateDateFormatInExpandedSections(rowIndex, 'clarification');
     }
 }

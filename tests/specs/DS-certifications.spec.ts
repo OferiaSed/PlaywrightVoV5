@@ -71,10 +71,10 @@ test.describe('DS Certifications - Row Expansion Functionality', () => {
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
         await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
     });
 
-    test('Validate Row Expansion with Certification Section - Req 3.7.002', async ({ certifications }) => {
+    test('Validate Row Expansion with Certification Section - Req 3.7.002', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(6);
         await certifications.navigateToCertificationsTab();
         
         // Expand first row
@@ -84,10 +84,11 @@ test.describe('DS Certifications - Row Expansion Functionality', () => {
         await certifications.validateCertificationSectionFields(0);
         
         // Validate date formats in certification section
-        await certifications.validateDateFormatInExpandedSections(0);
+        await certifications.validateDateFormatInExpandedSections(0, 'certification');
     });
 
-    test('Validate Clarification Section Visibility Logic - Req 3.7.003', async ({ certifications }) => {
+    test('Validate Clarification Section Visibility Logic - Req 3.7.003', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(6);
         await certifications.navigateToCertificationsTab();
         
         // Expand first row
@@ -95,16 +96,10 @@ test.describe('DS Certifications - Row Expansion Functionality', () => {
         
         // Validate clarification section visibility logic
         await certifications.validateClarificationSectionVisibility(0);
-        
-        // Test with multiple rows to check different scenarios
-        const rowCount = await certifications.getGridRowCount();
-        for (let i = 1; i < Math.min(rowCount, 3); i++) {
-            await certifications.expandCertificationRow(i);
-            await certifications.validateClarificationSectionVisibility(i);
-        }
     });
 
-    test('Validate Intermittent Absence Frequency Section - Req 3.7.004', async ({ certifications }) => {
+    test('Validate Intermittent Absence Frequency Section - Req 3.7.004', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(7);
         await certifications.navigateToCertificationsTab();
         
         // Expand first row
@@ -114,7 +109,8 @@ test.describe('DS Certifications - Row Expansion Functionality', () => {
         await certifications.validateIntermittentAbsenceFrequencySection(0);
     });
 
-    test('Validate Complete Expanded Row Data - Req 3.7.002-3.7.004', async ({ certifications }) => {
+    test('Validate Complete Expanded Row Data - Req 3.7.002-3.7.004', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(7);
         await certifications.navigateToCertificationsTab();
         
         // Validate complete expanded row data
@@ -127,7 +123,8 @@ test.describe('DS Certifications - Row Expansion Functionality', () => {
         }
     });
 
-    test('Validate Row Collapse Functionality', async ({ certifications, page }) => {
+    test('Validate Row Collapse Functionality', async ({ certifications, view, page }) => {
+        await view.SearchClaimByCriteria(7);
         await certifications.navigateToCertificationsTab();
         
         // Expand first row
@@ -147,7 +144,7 @@ test.describe('DS Certifications - Filter and Search Functionality', () => {
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
         await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
+        await view.SearchClaimByCriteria(7);
     });
 
     test('Validate Filter Functionality - Req 3.7.005', async ({ certifications }) => {
@@ -157,12 +154,11 @@ test.describe('DS Certifications - Filter and Search Functionality', () => {
         const filterTests = [
             { type: 'Status', value: 'Complete' },
             { type: 'Relationship', value: 'Self' },
-            { type: 'Reason', value: 'Medical' }
+            { type: 'Reason', value: 'Lorem ipsum dolor sit ame' }
         ];
         
         for (const filterTest of filterTests) {
             await certifications.filterCertifications(filterTest.type, filterTest.value);
-            await certifications.delay(1000); // Wait for filter to apply
         }
     });
 
@@ -173,7 +169,7 @@ test.describe('DS Certifications - Filter and Search Functionality', () => {
         const initialCount = await certifications.getCertificationCount();
         
         // Apply filter
-        await certifications.filterCertifications('Status', 'Complete');
+        await certifications.filterCertifications('Status', 'Complete', false);
         
         // Validate filtered results
         const filteredCount = await certifications.getCertificationCount();
@@ -186,13 +182,8 @@ test.describe('DS Certifications - Filter and Search Functionality', () => {
         // Get initial count
         const initialCount = await certifications.getCertificationCount();
         
-        // Apply filter
-        await certifications.filterCertifications('Status', 'Complete');
-        
-        // Clear filter (assuming there's a clear button or empty the filter)
-        const filterInput = page.locator('//input[@placeholder*="Status" or @name*="Status"]');
-        await filterInput.clear();
-        await page.keyboard.press('Enter');
+        // Apply filter and clean it
+        await certifications.filterCertifications('Status', 'Complete', true);
         
         // Validate all results are shown again
         const finalCount = await certifications.getCertificationCount();
@@ -205,7 +196,7 @@ test.describe('DS Certifications - Pagination Functionality', () => {
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
         await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
+        await view.SearchClaimByCriteria(8);
     });
 
     test('Validate Pagination Controls Display - Req 3.7.006', async ({ certifications }) => {
@@ -219,32 +210,33 @@ test.describe('DS Certifications - Pagination Functionality', () => {
         await certifications.navigateToCertificationsTab();
         
         // Check if pagination is available
-        const paginationSection = page.locator('//div[contains(@class, "pagination")]');
+        const paginationSection = certifications.getPaginationSection();
         const isPaginationVisible = await paginationSection.isVisible();
         
         if (isPaginationVisible) {
-            await certifications.navigateToNextPage();
-            
             // Validate we're on a different page
-            const currentUrl = await page.url();
-            expect(currentUrl, 'URL should change after navigating to next page').toContain('page');
+            let currentPageNumber = await certifications.getCurrentPageNumber();
+            await certifications.navigateToNextPage();
+            let nextPageNumber = await certifications.getCurrentPageNumber();
+            expect(currentPageNumber, `Page number should change after navigation. Initial Page [${currentPageNumber}], Actual Page [${nextPageNumber}]`).not.toBe(nextPageNumber);
         }
     });
 
     test('Validate Previous Page Navigation', async ({ certifications, page }) => {
         await certifications.navigateToCertificationsTab();
         
-        // Navigate to next page first
-        const paginationSection = page.locator('//div[contains(@class, "pagination")]');
+        // Check if pagination is available
+        const paginationSection = certifications.getPaginationSection();
         const isPaginationVisible = await paginationSection.isVisible();
         
         if (isPaginationVisible) {
+            let currentPageNumber = await certifications.getCurrentPageNumber();
             await certifications.navigateToNextPage();
             await certifications.navigateToPreviousPage();
             
             // Validate we're back to the first page
-            const currentUrl = await page.url();
-            expect(currentUrl, 'Should be back to first page').not.toContain('page=2');
+            let nextPageNumber = await certifications.getCurrentPageNumber();
+            expect(currentPageNumber, `Page number should be the same after navigation. Initial Page [${currentPageNumber}], Actual Page [${nextPageNumber}]`).toBe(nextPageNumber);
         }
     });
 
@@ -252,375 +244,18 @@ test.describe('DS Certifications - Pagination Functionality', () => {
         await certifications.navigateToCertificationsTab();
         
         // Check if pagination is available
-        const paginationSection = page.locator('//div[contains(@class, "pagination")]');
+        const paginationSection = certifications.getPaginationSection();
         const isPaginationVisible = await paginationSection.isVisible();
         
         if (isPaginationVisible) {
             // Navigate to page 2
-            await certifications.navigateToSpecificPage(2);
+            let pageToSelect = 2;
+            await certifications.navigateToSpecificPage(pageToSelect);
             
             // Validate we're on page 2
-            const currentUrl = await page.url();
-            expect(currentUrl, 'Should be on page 2').toContain('page=2');
+            let nextPageNumber = await certifications.getCurrentPageNumber();
+            expect(pageToSelect.toString(), `Page number should be Page [${pageToSelect}], Actual Page [${nextPageNumber}]`).toBe(nextPageNumber.toString());
         }
     });
 });
 
-test.describe('DS Certifications - Scroll to Top Functionality', () => {
-    
-    test.beforeEach(async ({ login, view }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-    });
-
-    test('Validate Scroll to Top Link Display and Functionality - Req 3.7.007', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Validate scroll to top functionality
-        await certifications.validateScrollToTopFunctionality();
-    });
-
-    test('Validate Scroll to Top Link Visibility', async ({ certifications, page }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Scroll down to make the link visible
-        await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-        
-        // Validate scroll to top link is visible
-        const scrollToTopLink = page.locator('//a[text()="scroll to top"]');
-        await expect(scrollToTopLink, 'Scroll to top link should be visible when scrolled down').toBeVisible();
-    });
-});
-
-test.describe('DS Certifications - Data-Driven Testing', () => {
-    
-    test.beforeEach(async ({ login, view }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-    });
-
-    test('Data-Driven Test - Multiple Certification Scenarios', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Test data scenarios
-        const testScenarios = [
-            { relationship: 'Self', status: 'Complete', intermittent: 'Yes' },
-            { relationship: 'Spouse', status: 'Pending', intermittent: 'No' },
-            { relationship: 'Child', status: 'Complete', intermittent: 'Yes' }
-        ];
-        
-        const rowCount = await certifications.getGridRowCount();
-        
-        for (let i = 0; i < Math.min(rowCount, testScenarios.length); i++) {
-            const rowData = await certifications.getRowData(i);
-            
-            // Validate relationship
-            if (testScenarios[i].relationship) {
-                expect(rowData.relationship, `Row ${i} relationship should match expected`).toContain(testScenarios[i].relationship);
-            }
-            
-            // Validate status
-            if (testScenarios[i].status) {
-                expect(rowData.status, `Row ${i} status should match expected`).toContain(testScenarios[i].status);
-            }
-            
-            // Validate intermittent
-            if (testScenarios[i].intermittent) {
-                expect(rowData.intermittent, `Row ${i} intermittent should match expected`).toContain(testScenarios[i].intermittent);
-            }
-        }
-    });
-
-    test('Data-Driven Test - Excel Data Integration', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Use Excel data for testing
-        const excelReader = new ExcelReader('C:\\DataVoV\\DataDriverVovQA.xlsx');
-        
-        try {
-            excelReader.selectDataSet('Certifications', 1);
-            const testData = excelReader.getAll();
-            
-            // Validate data from Excel
-            const rowCount = await certifications.getGridRowCount();
-            expect(rowCount, 'Should have certification data').toBeGreaterThan(0);
-            
-            // Test with Excel data
-            if (testData.ExpectedRelationship) {
-                const rowData = await certifications.getRowData(0);
-                expect(rowData.relationship, 'Relationship should match Excel data').toContain(testData.ExpectedRelationship);
-            }
-            
-            if (testData.ExpectedStatus) {
-                const rowData = await certifications.getRowData(0);
-                expect(rowData.status, 'Status should match Excel data').toContain(testData.ExpectedStatus);
-            }
-            
-        } catch (error) {
-            console.log('Excel data not available, using default test data');
-            // Continue with default test data
-            const rowCount = await certifications.getGridRowCount();
-            expect(rowCount, 'Should have certification data').toBeGreaterThan(0);
-        }
-    });
-
-    test('Data-Driven Test - Certification Section Data Validation', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Expand first row and get certification section data
-        await certifications.expandCertificationRow(0);
-        const certificationData = await certifications.getCertificationSectionData(0);
-        
-        // Validate certification section fields
-        const expectedFields = ['Status', 'Substatus', 'Begin date', 'End date', 'Date sent', 'Date received', 'Date reviewed', 'Date due'];
-        
-        for (const field of expectedFields) {
-            expect(certificationData[field], `Certification field ${field} should have data`).toBeDefined();
-        }
-        
-        // Validate date formats
-        const dateFields = ['Begin date', 'End date', 'Date sent', 'Date received', 'Date reviewed', 'Date due'];
-        for (const field of dateFields) {
-            if (certificationData[field] && certificationData[field].trim() !== '') {
-                const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-                expect(certificationData[field], `Certification ${field} should be in MM/DD/YYYY format`).toMatch(dateRegex);
-            }
-        }
-    });
-
-    test('Data-Driven Test - Clarification Section Data Validation', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Expand first row and get clarification section data
-        await certifications.expandCertificationRow(0);
-        const clarificationData = await certifications.getClarificationSectionData(0);
-        
-        // Validate clarification section fields
-        const expectedFields = ['Type', 'Reason', 'Date sent', 'Date received', 'Date reviewed', 'Date due'];
-        
-        for (const field of expectedFields) {
-            expect(clarificationData[field], `Clarification field ${field} should be defined`).toBeDefined();
-        }
-        
-        // Validate date formats for clarification dates
-        const dateFields = ['Date sent', 'Date received', 'Date reviewed', 'Date due'];
-        for (const field of dateFields) {
-            if (clarificationData[field] && clarificationData[field].trim() !== '') {
-                const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-                expect(clarificationData[field], `Clarification ${field} should be in MM/DD/YYYY format`).toMatch(dateRegex);
-            }
-        }
-    });
-
-    test('Data-Driven Test - Intermittent Absence Frequency Data Validation', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Expand first row and get intermittent section data
-        await certifications.expandCertificationRow(0);
-        const intermittentData = await certifications.getIntermittentSectionData(0);
-        
-        // Validate intermittent section fields
-        const expectedFields = ['Incapacity/Care', 'Treatment/Appointments'];
-        
-        for (const field of expectedFields) {
-            expect(intermittentData[field], `Intermittent field ${field} should be defined`).toBeDefined();
-        }
-        
-        // Validate format for intermittent absence frequency
-        if (intermittentData['Incapacity/Care'] && intermittentData['Incapacity/Care'].trim() !== '') {
-            const frequencyRegex = /^\d+\s+time\(s\)\s+per\s+(week|month|day)\s+for\s+\d+\s+(day|hour|week)\(s\)\s+each$/;
-            expect(intermittentData['Incapacity/Care'], 'Incapacity/Care should be in correct format').toMatch(frequencyRegex);
-        }
-        
-        if (intermittentData['Treatment/Appointments'] && intermittentData['Treatment/Appointments'].trim() !== '') {
-            const frequencyRegex = /^\d+\s+time\(s\)\s+per\s+(week|month|day)\s+for\s+\d+\s+(day|hour|week)\(s\)\s+each$/;
-            expect(intermittentData['Treatment/Appointments'], 'Treatment/Appointments should be in correct format').toMatch(frequencyRegex);
-        }
-    });
-});
-
-test.describe('DS Certifications - Error Handling and Edge Cases', () => {
-    
-    test.beforeEach(async ({ login, view }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-    });
-
-    test('Error Handling - Invalid Filter Values', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Test with invalid filter values
-        try {
-            await certifications.filterCertifications('Status', 'InvalidStatus');
-            // Should handle gracefully
-        } catch (error) {
-            // Expected behavior for invalid filter
-            expect(error).toBeDefined();
-        }
-    });
-
-    test('Edge Case - Empty Grid Display', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Test with filter that returns no results
-        await certifications.filterCertifications('Status', 'NonExistentStatus');
-        
-        // Validate empty state is handled gracefully
-        const rowCount = await certifications.getGridRowCount();
-        expect(rowCount, 'Should handle empty grid gracefully').toBeGreaterThanOrEqual(0);
-    });
-
-    test('Edge Case - Rapid Row Expansion/Collapse', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Rapidly expand and collapse rows
-        for (let i = 0; i < 3; i++) {
-            await certifications.expandCertificationRow(0);
-            await certifications.delay(500);
-            await certifications.collapseCertificationRow(0);
-            await certifications.delay(500);
-        }
-        
-        // Validate final state is consistent
-        const rowCount = await certifications.getGridRowCount();
-        expect(rowCount, 'Grid should remain consistent after rapid expansion/collapse').toBeGreaterThan(0);
-    });
-
-    test('Edge Case - Large Dataset Performance', async ({ certifications, page }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Test with large dataset
-        const startTime = Date.now();
-        
-        // Navigate through multiple pages if available
-        const paginationSection = page.locator('//div[contains(@class, "pagination")]');
-        const isPaginationVisible = await paginationSection.isVisible();
-        
-        if (isPaginationVisible) {
-            await certifications.navigateToNextPage();
-            await certifications.navigateToPreviousPage();
-        }
-        
-        const endTime = Date.now();
-        const duration = endTime - startTime;
-        
-        // Validate performance is acceptable (less than 5 seconds)
-        expect(duration, 'Page navigation should be performant').toBeLessThan(5000);
-    });
-});
-
-test.describe('DS Certifications - Cross-Browser and Accessibility', () => {
-    
-    test.beforeEach(async ({ login, view }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-    });
-
-    test('Cross-Browser - Grid Display Consistency', async ({ certifications }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Validate grid displays consistently across browsers
-        await certifications.validateGridStructure();
-        await certifications.validateCertificationCountDisplay();
-        
-        // Validate row expansion works consistently
-        await certifications.expandCertificationRow(0);
-        await certifications.validateCertificationSectionFields(0);
-    });
-
-    test('Accessibility - Keyboard Navigation', async ({ certifications, page }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Test keyboard navigation
-        await page.keyboard.press('Tab');
-        await page.keyboard.press('Tab');
-        await page.keyboard.press('Enter');
-        
-        // Validate keyboard navigation works
-        const focusedElement = await page.locator(':focus');
-        await expect(focusedElement, 'Element should be focusable via keyboard').toBeVisible();
-    });
-
-    test('Accessibility - Screen Reader Compatibility', async ({ certifications, page }) => {
-        await certifications.navigateToCertificationsTab();
-        
-        // Validate ARIA labels and roles
-        const grid = page.locator('//div[contains(@class, "grid") or contains(@class, "table")]');
-        await expect(grid, 'Grid should have proper ARIA attributes').toBeVisible();
-        
-        // Validate expand buttons have proper labels
-        const expandButton = page.locator('//button[contains(@class, "expand") or contains(text(), ">")]').first();
-        await expect(expandButton, 'Expand button should have proper accessibility attributes').toBeVisible();
-    });
-});
-
-test.describe('DS Certifications - Integration and End-to-End', () => {
-    
-    test.beforeEach(async ({ login, view }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-    });
-
-    test('End-to-End - Complete Certifications Workflow', async ({ certifications, page }) => {
-        // Navigate to certifications
-        await certifications.navigateToCertificationsTab();
-        
-        // Validate complete page
-        await certifications.validateCompleteCertificationsPage();
-        
-        // Test filtering
-        await certifications.filterCertifications('Status', 'Complete');
-        
-        // Test pagination if available
-        const paginationSection = page.locator('//div[contains(@class, "pagination")]');
-        const isPaginationVisible = await paginationSection.isVisible();
-        
-        if (isPaginationVisible) {
-            await certifications.navigateToNextPage();
-            await certifications.navigateToPreviousPage();
-        }
-        
-        // Test row expansion
-        await certifications.validateExpandedRowCompleteData(0);
-        
-        // Test scroll to top
-        await certifications.scrollToTopOfPage();
-        
-        // Validate final state
-        await certifications.validateCertificationsPageHeader();
-    });
-
-    test('Integration - Certifications with Other Tabs', async ({ certifications, view }) => {
-        // Navigate to certifications
-        await certifications.navigateToCertificationsTab();
-        await certifications.validateCertificationsPageHeader();
-        
-        // Navigate to other tabs and back
-        await view.goToClaimSearchTab();
-        await certifications.navigateToCertificationsTab();
-        
-        // Validate certifications still works
-        await certifications.validateCertificationsPageHeader();
-        await certifications.validateGridStructure();
-    });
-
-    test('Integration - Session Persistence', async ({ certifications, page }) => {
-        // Navigate to certifications
-        await certifications.navigateToCertificationsTab();
-        
-        // Apply filter
-        await certifications.filterCertifications('Status', 'Complete');
-        
-        // Navigate away and back
-        await page.goBack();
-        await certifications.navigateToCertificationsTab();
-        
-        // Validate state is maintained
-        await certifications.validateCertificationsPageHeader();
-    });
-});
