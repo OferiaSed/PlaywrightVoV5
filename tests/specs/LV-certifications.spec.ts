@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/BaseTest';
 import { ExcelReader } from '../../utils/helpers/excel-reader';
 
 /**
- * DETAILS>CERTIFICATIONS Screen Test Suite
+ * LEAVE - DETAILS>CERTIFICATIONS Screen Test Suite
  * 
  * This test suite covers the comprehensive testing of the DETAILS>CERTIFICATIONS screen
  * as specified in User Story requirements 3.7.001 through 3.7.008.
@@ -17,7 +17,7 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
  * - Data-driven testing scenarios
  */
 
-test.describe('DS Certifications - Page Structure and Header', () => {
+test.describe('LV Certifications - Page Structure and Header', () => {
     
     test.beforeEach(async ({ login, view }) => {
         // Navigate to a disability claim for testing
@@ -66,7 +66,7 @@ test.describe('DS Certifications - Page Structure and Header', () => {
     });
 });
 
-test.describe('DS Certifications - Row Expansion Functionality', () => {
+test.describe('LV Certifications - Row Expansion Functionality', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -139,7 +139,7 @@ test.describe('DS Certifications - Row Expansion Functionality', () => {
     });
 });
 
-test.describe('DS Certifications - Filter and Search Functionality', () => {
+test.describe('LV Certifications - Filter and Search Functionality', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -191,7 +191,7 @@ test.describe('DS Certifications - Filter and Search Functionality', () => {
     });
 });
 
-test.describe('DS Certifications - Pagination Functionality', () => {
+test.describe('LV Certifications - Pagination Functionality', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
