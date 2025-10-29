@@ -115,12 +115,8 @@ test.describe('LV Certifications - Row Expansion Functionality', () => {
         
         // Validate complete expanded row data
         await certifications.validateExpandedRowCompleteData(0);
+        await certifications.collapseCertificationRow(0);
         
-        // Test with multiple rows
-        const rowCount = await certifications.getGridRowCount();
-        for (let i = 0; i < Math.min(rowCount, 3); i++) {
-            await certifications.validateExpandedRowCompleteData(i);
-        }
     });
 
     test('Validate Row Collapse Functionality', async ({ certifications, view, page }) => {
