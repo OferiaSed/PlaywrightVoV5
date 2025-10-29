@@ -41,6 +41,27 @@ export class BasePage{
         return this.page.url();
     }
 
+    @step('Verify Claim Level Menu Visibility')
+    async claimLevelMenuVisibility(tabName: string): Promise<void> {
+        //Select Menu Tab
+        let counter = 0;
+        const options = tabName.split(';');
+        for (const option of options) {
+            const tabMenu = await this.page.getByRole('tab', { name: option});
+            await expect(tabMenu, `Tab "${option}"should exist and be visible.`).toBeVisible();
+            await tabMenu.hover();            
+            if(counter == 0){
+                await tabMenu.highlight();
+                await tabMenu.hover();
+            }
+            else{
+                await tabMenu.highlight();
+            }
+            await this.waitForPageLoad();
+            counter++;
+        }
+    }
+
     
     @step('Select Tab Menu')
     async selectTabMenu(tabName: string, useHover = false): Promise<void> {
@@ -99,6 +120,11 @@ export class BasePage{
                 await option.click();
             }
         }
+    }
+
+    @step('Scroll to Bottom of Page')
+    async scrollToBottom(): Promise<void> {
+        await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     }
 
     async getDicTableHeaders(){

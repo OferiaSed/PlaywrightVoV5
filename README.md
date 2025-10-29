@@ -64,7 +64,7 @@ playwright-framework/
 - Create a local folder on your machine
 - Open VSCode and select the folder previosly created
 - Go to Terminal > New Terminal
-- execute following command --> npm init playwright@latest
+- execute following command --> npm init playwright@latest --yes
 - This command will install latest version of playwright
 -  npm install @playwright/test@1.46.0  playwright@1.46.0 --save -dev
 

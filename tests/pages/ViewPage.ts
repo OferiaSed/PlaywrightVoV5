@@ -44,7 +44,7 @@ export class ViewPage extends BasePage {
     // Actions for Page Object Model
     //--------------------------------------------------------------------------------------------
     @step('Navigate to VIEW page')
-    private async goToViewPage() {
+    async goToViewPage() {
         await this.selectTabMenu('VIEW');
         await this.waitForPageLoad();
     }
@@ -184,6 +184,5 @@ export class ViewPage extends BasePage {
         await this.waitForPageLoad();
     }
 
-   
 
 }

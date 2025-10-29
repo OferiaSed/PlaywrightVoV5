@@ -40,7 +40,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         baseURL: environments.qa1.baseUrl,
         headless: environments.qa1.headless,
-        viewport: { width: 1500, height:1000},
+        viewport: { width: 1600, height:900 },
       },
     },    
   ],
