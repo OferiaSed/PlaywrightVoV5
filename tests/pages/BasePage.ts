@@ -61,7 +61,6 @@ export class BasePage{
             counter++;
         }
     }
-
     
     @step('Select Tab Menu')
     async selectTabMenu(tabName: string, useHover = false): Promise<void> {
