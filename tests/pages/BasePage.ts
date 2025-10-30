@@ -13,7 +13,7 @@ export class BasePage{
         this.page = page;
         this.baseUrl = envHelper.getBaseUrl();
         this.driverFile = envHelper.getDataDriver();
-        this.driverPath = "C:\\Data_Playwrigth\\";
+        this.driverPath = "C:\\DataVoV\\";
     }
 
     @step('Delay to wait couple seconds.')

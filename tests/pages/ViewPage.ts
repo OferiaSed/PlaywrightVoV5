@@ -184,6 +184,24 @@ export class ViewPage extends BasePage {
         await this.waitForPageLoad();
     }
 
-   
+    @step('Search for specific claim by claim number')
+    async searchSpecificClaim(claimNumber: string): Promise<void> {
+        await this.goToViewPage();
+        
+        // Input claim number in search field
+        await this.inputTextField('Claim Number', claimNumber);
+        
+        // Click search button
+        await this.searchButton.click();
+        await this.waitForPageLoad();
+        
+        // Click on the first result (should be the specific claim)
+        const claimRow = this.page.locator('tbody tr').nth(0);
+        await expect(claimRow, `Claim ${claimNumber} should be found`).toBeVisible();
+        
+        const claimLink = claimRow.locator('a').nth(0);
+        await claimLink.click();
+        await this.waitForPageLoad();
+    }
 
 }

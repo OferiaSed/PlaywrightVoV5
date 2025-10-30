@@ -100,4 +100,36 @@ export class LoginPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  @step('Perform login with specific user role')
+  async performLoginWithRole(userRole: string): Promise<void> {
+    const excelReader = new ExcelReader(this.driverPath + this.driverFile);
+    
+    // Map user roles to dataset rows - this would be configured based on test data
+    let datasetRow = 1; // Default to standard user
+    
+    switch (userRole.toLowerCase()) {
+      case 'administrator':
+      case 'admin':
+        datasetRow = 1;
+        break;
+      case 'standarduser':
+      case 'standard':
+        datasetRow = 2;
+        break;
+      case 'readonlyuser':
+      case 'readonly':
+        datasetRow = 3;
+        break;
+      case 'guestuser':
+      case 'guest':
+        datasetRow = 4;
+        break;
+      default:
+        datasetRow = 2; // Default to standard user
+    }
+    
+    // Use the role-specific login data
+    await this.performLoginDataDriven(datasetRow);
+  }
+
 }
