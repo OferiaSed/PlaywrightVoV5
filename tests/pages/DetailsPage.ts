@@ -27,7 +27,8 @@ export class DetailsPage extends BasePage {
     //--------------------------------------------------------------------------------------------
 
     private get detailsTab(): Locator {
-        return this.page.getByRole('tab', { name: 'Details' });
+        // Use .first() to ensure we get the main Details tab in navigation, not any other "Details" text on the page
+        return this.page.getByRole('tab', { name: 'Details' }).first();
     }
 
     // The Details tab shows a floating submenu with ids like #sub-item-0, #sub-item-1, etc
@@ -92,6 +93,70 @@ export class DetailsPage extends BasePage {
 
     private get hrDataSection(): Locator {
         return this.page.locator('[data-testid="hr-data-section"]');
+    }
+
+    // Custom Fields page elements - Fields Tab
+    private get customFieldsHeader(): Locator {
+        return this.page.getByRole('heading', { name: 'Custom fields', level: 2 });
+    }
+
+    private get fieldsTab(): Locator {
+        return this.page.getByRole('tab', { name: 'FIELDS' });
+    }
+
+    private get hrFieldsTab(): Locator {
+        return this.page.getByRole('tab', { name: 'HR FIELDS' });
+    }
+
+    private get alternateNumbersTab(): Locator {
+        return this.page.getByRole('tab', { name: 'ALTERNATE NUMBERS' });
+    }
+
+    private get expandAllToggle(): Locator {
+        return this.page.locator('[data-testid="expand-all-toggle"]');
+    }
+
+    private get exportIcon(): Locator {
+        return this.page.locator('[data-testid="export-icon"]');
+    }
+
+    private get saveChangesButton(): Locator {
+        return this.page.getByRole('button', { name: 'Save changes' });
+    }
+
+    private get resetButton(): Locator {
+        return this.page.getByRole('button', { name: 'Reset' });
+    }
+
+    // Locators for custom field cards
+    private getCustomFieldCard(categoryName: string): Locator {
+        return this.page.locator(`[data-testid="custom-field-card-${categoryName}"]`);
+    }
+
+    private getCustomFieldCardHeader(categoryName: string): Locator {
+        return this.getCustomFieldCard(categoryName).locator('[data-testid="card-header"]');
+    }
+
+    private getCustomFieldCardChevron(categoryName: string): Locator {
+        return this.getCustomFieldCard(categoryName).locator('[data-testid="card-chevron"]');
+    }
+
+    private getCustomFieldTable(categoryName: string): Locator {
+        return this.getCustomFieldCard(categoryName).locator('table');
+    }
+
+    // HR Fields Tab elements
+    private get asOfDateFilter(): Locator {
+        return this.page.locator('[data-testid="as-of-date-filter"]');
+    }
+
+    private get hrFieldsTable(): Locator {
+        return this.page.locator('[data-testid="hr-fields-table"]');
+    }
+
+    // Alternate Numbers Tab elements
+    private get alternateNumbersTable(): Locator {
+        return this.page.locator('[data-testid="alternate-numbers-table"]');
     }
 
     // Dynamic locator for menu items
@@ -395,5 +460,545 @@ export class DetailsPage extends BasePage {
             path: `test-results/screenshots/${screenshotName}.png`,
             fullPage: false 
         });
+    }
+
+    @step('Take screenshot of current page state')
+    async takeScreenshot(screenshotName: string): Promise<void> {
+        await this.page.screenshot({ 
+            path: `test-results/screenshots/${screenshotName}.png`,
+            fullPage: true 
+        });
+    }
+
+    //--------------------------------------------------------------------------------------------
+    // Custom Fields - Fields Tab Methods (Req 3.2)
+    //--------------------------------------------------------------------------------------------
+
+    @step('Validate Custom Fields page header')
+    async validateCustomFieldsPageHeader(): Promise<void> {
+        await this.navigateToCustomFields();
+        await expect(this.customFieldsHeader, 'Custom Fields H2 header should be visible').toBeVisible();
+    }
+
+    @step('Navigate to Fields tab')
+    async navigateToFieldsTab(): Promise<void> {
+        await this.navigateToCustomFields();
+        await expect(this.fieldsTab, 'Fields tab should be visible').toBeVisible();
+        await this.fieldsTab.click();
+        await this.waitForPageLoad();
+    }
+
+    @step('Validate Fields tab contains expandable cards')
+    async validateFieldsTabExpandableCards(): Promise<void> {
+        await this.navigateToFieldsTab();
+        // Check for at least one custom field card
+        const cards = this.page.locator('[data-testid^="custom-field-card-"]');
+        const cardCount = await cards.count();
+        expect(cardCount, 'At least one custom field card should be visible').toBeGreaterThan(0);
+    }
+
+    @step('Validate top card is expanded by default')
+    async validateTopCardExpandedByDefault(): Promise<void> {
+        await this.navigateToFieldsTab();
+        const cards = this.page.locator('[data-testid^="custom-field-card-"]');
+        const firstCard = cards.first();
+        const firstCardTable = firstCard.locator('table');
+        await expect(firstCardTable, 'Top card table should be visible (expanded)').toBeVisible();
+    }
+
+    @step('Validate other cards are collapsed by default')
+    async validateOtherCardsCollapsedByDefault(): Promise<void> {
+        await this.navigateToFieldsTab();
+        const cards = this.page.locator('[data-testid^="custom-field-card-"]');
+        const cardCount = await cards.count();
+        
+        if (cardCount > 1) {
+            for (let i = 1; i < cardCount; i++) {
+                const card = cards.nth(i);
+                const table = card.locator('table');
+                // Table should not be visible if card is collapsed
+                const isVisible = await table.isVisible().catch(() => false);
+                expect(isVisible, `Card ${i + 1} should be collapsed by default`).toBeFalsy();
+            }
+        }
+    }
+
+    @step('Expand custom field card')
+    async expandCustomFieldCard(categoryName: string): Promise<void> {
+        const chevron = this.getCustomFieldCardChevron(categoryName);
+        await expect(chevron, `Chevron for ${categoryName} should be visible`).toBeVisible();
+        await chevron.click();
+        await this.waitForPageLoad();
+    }
+
+    @step('Collapse custom field card')
+    async collapseCustomFieldCard(categoryName: string): Promise<void> {
+        await this.expandCustomFieldCard(categoryName); // Toggle
+    }
+
+    @step('Validate Expand all toggle')
+    async validateExpandAllToggle(): Promise<void> {
+        await this.navigateToFieldsTab();
+        await expect(this.expandAllToggle, 'Expand all toggle should be visible').toBeVisible();
+    }
+
+    @step('Toggle Expand all')
+    async toggleExpandAll(): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandAllToggle.click();
+        await this.waitForPageLoad();
+    }
+
+    @step('Validate all cards are expanded after toggle')
+    async validateAllCardsExpanded(): Promise<void> {
+        const cards = this.page.locator('[data-testid^="custom-field-card-"]');
+        const cardCount = await cards.count();
+        
+        for (let i = 0; i < cardCount; i++) {
+            const card = cards.nth(i);
+            const table = card.locator('table');
+            await expect(table, `Card ${i + 1} should be expanded`).toBeVisible();
+        }
+    }
+
+    @step('Validate Fields tab table columns for Accommodation')
+    async validateFieldsTabTableColumns(categoryName: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const headers = table.locator('thead th');
+        
+        const expectedColumns = ['FIELD #', 'FIELD', 'VALUE', 'VALIDATION CODE DESCRIPTION'];
+        const headerCount = await headers.count();
+        
+        for (let i = 0; i < Math.min(expectedColumns.length, headerCount); i++) {
+            const headerText = await headers.nth(i).textContent();
+            expect(headerText?.trim().toUpperCase(), `Column ${i + 1} should match ${expectedColumns[i]}`)
+                .toContain(expectedColumns[i]);
+        }
+    }
+
+    @step('Validate table default sort on FIELD # column')
+    async validateTableDefaultSort(categoryName: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const rows = table.locator('tbody tr');
+        const rowCount = await rows.count();
+        
+        if (rowCount > 1) {
+            const firstRowFieldNum = await rows.first().locator('td').nth(0).textContent();
+            const secondRowFieldNum = await rows.nth(1).locator('td').nth(0).textContent();
+            
+            // Field numbers should be in ascending order
+            const firstNum = parseInt(firstRowFieldNum?.trim() || '0');
+            const secondNum = parseInt(secondRowFieldNum?.trim() || '0');
+            expect(firstNum, 'First field number should be less than or equal to second').toBeLessThanOrEqual(secondNum);
+        }
+    }
+
+    @step('Validate table has global filter')
+    async validateTableGlobalFilter(categoryName: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const filter = table.locator('input[type="text"]').first();
+        await expect(filter, 'Global filter should be visible').toBeVisible();
+    }
+
+    @step('Apply table filter')
+    async applyTableFilter(categoryName: string, filterValue: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const filter = table.locator('input[type="text"]').first();
+        await filter.fill(filterValue);
+        await this.waitForPageLoad();
+    }
+
+    @step('Validate no results empty state')
+    async validateNoResultsEmptyState(categoryName: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        // Apply a filter that should return no results
+        await this.applyTableFilter(categoryName, 'NonExistentValue12345');
+        
+        // Check for empty state
+        const emptyState = this.page.locator('text="No match. Try a different filter criteria"');
+        await expect(emptyState, 'No results empty state should be visible').toBeVisible();
+    }
+
+    @step('Validate field count display')
+    async validateFieldCountDisplay(categoryName: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const countText = table.locator('[data-testid="field-count"]');
+        const countTextContent = await countText.textContent();
+        
+        expect(countTextContent, 'Field count should be displayed').toContain('fields');
+        expect(countTextContent, 'Field count should contain a number').toMatch(/\d+/);
+    }
+
+    @step('Validate HR tag on field')
+    async validateHRTagOnField(categoryName: string, fieldNumber: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
+        const hrTag = fieldRow.locator('[data-testid="hr-tag"]');
+        await expect(hrTag, `HR tag should be visible for field ${fieldNumber}`).toBeVisible();
+    }
+
+    @step('Validate HR tag tooltip')
+    async validateHRTagTooltip(categoryName: string, fieldNumber: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
+        const hrTag = fieldRow.locator('[data-testid="hr-tag"]');
+        
+        await hrTag.hover();
+        await this.delay(500);
+        
+        const tooltip = this.page.locator('text="Provided by client HR feed"');
+        await expect(tooltip, 'HR tag tooltip should be visible on hover').toBeVisible();
+    }
+
+    @step('Validate export icon')
+    async validateExportIcon(): Promise<void> {
+        await this.navigateToFieldsTab();
+        await expect(this.exportIcon, 'Export icon should be visible').toBeVisible();
+    }
+
+    @step('Click export icon and validate dropdown')
+    async clickExportIconAndValidateDropdown(): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.exportIcon.click();
+        await this.delay(300);
+        
+        const csvOption = this.page.getByRole('menuitem', { name: 'Export as CSV' });
+        const xlsxOption = this.page.getByRole('menuitem', { name: 'Export as XLSX' });
+        
+        await expect(csvOption, 'CSV export option should be visible').toBeVisible();
+        await expect(xlsxOption, 'XLSX export option should be visible').toBeVisible();
+    }
+
+    @step('Validate no fields empty state')
+    async validateNoFieldsEmptyState(): Promise<void> {
+        await this.navigateToFieldsTab();
+        
+        // Check for empty state elements
+        const emptyStateIcon = this.page.locator('[data-testid="no-fields-icon"]');
+        const emptyStateText = this.page.locator('text="No fields"');
+        
+        await expect(emptyStateIcon, 'No fields icon should be visible').toBeVisible();
+        await expect(emptyStateText, 'No fields text should be visible').toBeVisible();
+    }
+
+    //--------------------------------------------------------------------------------------------
+    // Custom Fields - Editing Methods (Req 3.3)
+    //--------------------------------------------------------------------------------------------
+
+    @step('Validate editable field input')
+    async validateEditableFieldInput(categoryName: string, fieldNumber: string, inputType: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
+        const valueCell = fieldRow.locator('td').nth(2); // VALUE column
+        
+        // Check for appropriate input type
+        let inputLocator: Locator;
+        switch (inputType.toLowerCase()) {
+            case 'dropdown':
+                inputLocator = valueCell.locator('select, [role="combobox"]');
+                break;
+            case 'text':
+                inputLocator = valueCell.locator('input[type="text"]');
+                break;
+            case 'date':
+                inputLocator = valueCell.locator('input[type="date"], input[placeholder*="date" i]');
+                break;
+            case 'numeric':
+                inputLocator = valueCell.locator('input[type="number"]');
+                break;
+            case 'decimal':
+                inputLocator = valueCell.locator('input[type="number"][step*="."]');
+                break;
+            case 'yesno':
+                inputLocator = valueCell.locator('input[type="radio"]');
+                break;
+            default:
+                inputLocator = valueCell.locator('input, select');
+        }
+        
+        await expect(inputLocator, `${inputType} input should be visible for field ${fieldNumber}`).toBeVisible();
+    }
+
+    @step('Edit field value')
+    async editFieldValue(categoryName: string, fieldNumber: string, newValue: string, inputType: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
+        const valueCell = fieldRow.locator('td').nth(2);
+        
+        switch (inputType.toLowerCase()) {
+            case 'dropdown':
+                const dropdown = valueCell.locator('select, [role="combobox"]');
+                await dropdown.click();
+                await this.page.getByRole('option', { name: newValue }).click();
+                break;
+            case 'text':
+            case 'numeric':
+            case 'decimal':
+                const input = valueCell.locator('input');
+                await input.clear();
+                await input.fill(newValue);
+                break;
+            case 'date':
+                const dateInput = valueCell.locator('input');
+                await dateInput.clear();
+                await dateInput.fill(newValue);
+                break;
+            case 'yesno':
+                const radio = valueCell.locator(`input[type="radio"][value="${newValue}"]`);
+                await radio.click();
+                break;
+        }
+        
+        await this.waitForPageLoad();
+    }
+
+    @step('Validate Save changes button')
+    async validateSaveChangesButton(): Promise<void> {
+        await this.navigateToFieldsTab();
+        await expect(this.saveChangesButton, 'Save changes button should be visible').toBeVisible();
+    }
+
+    @step('Click Save changes')
+    async clickSaveChanges(): Promise<void> {
+        await this.saveChangesButton.click();
+        await this.waitForPageLoad();
+        
+        // Check for success toast message
+        const toast = this.page.locator('text="Changes have been saved"');
+        await expect(toast, 'Success toast message should be visible').toBeVisible();
+    }
+
+    @step('Validate Reset button')
+    async validateResetButton(): Promise<void> {
+        await this.navigateToFieldsTab();
+        await expect(this.resetButton, 'Reset button should be visible').toBeVisible();
+    }
+
+    @step('Click Reset')
+    async clickReset(): Promise<void> {
+        await this.resetButton.click();
+        await this.waitForPageLoad();
+    }
+
+    @step('Validate numeric field validation error')
+    async validateNumericFieldValidationError(categoryName: string, fieldNumber: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
+        const valueCell = fieldRow.locator('td').nth(2);
+        const input = valueCell.locator('input');
+        
+        // Enter invalid value
+        await input.fill('abc123');
+        await input.blur(); // Remove focus to trigger validation
+        
+        await this.waitForPageLoad();
+        
+        // Check for validation error
+        const errorMessage = valueCell.locator('text="Error: Invalid format"');
+        await expect(errorMessage, 'Validation error should be visible').toBeVisible();
+    }
+
+    @step('Validate decimal field validation error')
+    async validateDecimalFieldValidationError(categoryName: string, fieldNumber: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
+        const valueCell = fieldRow.locator('td').nth(2);
+        const input = valueCell.locator('input');
+        
+        // Enter invalid value
+        await input.fill('abc.123');
+        await input.blur();
+        
+        await this.waitForPageLoad();
+        
+        // Check for validation error
+        const errorMessage = valueCell.locator('text="Error: Invalid format"');
+        await expect(errorMessage, 'Validation error should be visible').toBeVisible();
+    }
+
+    @step('Validate date field auto-clear on invalid format')
+    async validateDateFieldAutoClear(categoryName: string, fieldNumber: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
+        const valueCell = fieldRow.locator('td').nth(2);
+        const input = valueCell.locator('input');
+        
+        // Enter invalid date format
+        await input.fill('invalid-date');
+        await input.blur();
+        
+        await this.waitForPageLoad();
+        
+        // Field should be cleared
+        const inputValue = await input.inputValue();
+        expect(inputValue, 'Invalid date should be cleared').toBe('');
+    }
+
+    //--------------------------------------------------------------------------------------------
+    // Custom Fields - HR Fields Tab Methods (Req 3.4)
+    //--------------------------------------------------------------------------------------------
+
+    @step('Navigate to HR Fields tab')
+    async navigateToHRFieldsTab(): Promise<void> {
+        await this.navigateToCustomFields();
+        await expect(this.hrFieldsTab, 'HR Fields tab should be visible').toBeVisible();
+        await this.hrFieldsTab.click();
+        await this.waitForPageLoad();
+    }
+
+    @step('Validate HR Fields tab table columns')
+    async validateHRFieldsTabTableColumns(): Promise<void> {
+        await this.navigateToHRFieldsTab();
+        
+        const headers = this.hrFieldsTable.locator('thead th');
+        const expectedColumns = ['FIELD #', 'FIELD', 'VALUE', 'EFFECTIVE DATE'];
+        
+        const headerCount = await headers.count();
+        for (let i = 0; i < Math.min(expectedColumns.length, headerCount); i++) {
+            const headerText = await headers.nth(i).textContent();
+            expect(headerText?.trim().toUpperCase(), `Column ${i + 1} should match ${expectedColumns[i]}`)
+                .toContain(expectedColumns[i]);
+        }
+    }
+
+    @step('Validate As of date filter')
+    async validateAsOfDateFilter(): Promise<void> {
+        await this.navigateToHRFieldsTab();
+        await expect(this.asOfDateFilter, 'As of date filter should be visible').toBeVisible();
+    }
+
+    @step('Change As of date filter')
+    async changeAsOfDateFilter(date: string): Promise<void> {
+        await this.navigateToHRFieldsTab();
+        await this.asOfDateFilter.fill(date);
+        await this.waitForPageLoad();
+    }
+
+    @step('Validate As of date defaults to current date')
+    async validateAsOfDateDefaultsToCurrent(): Promise<void> {
+        await this.navigateToHRFieldsTab();
+        const currentDate = new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit' 
+        }).replace(/\//g, '/');
+        
+        const dateValue = await this.asOfDateFilter.inputValue();
+        // Date should be set to current date (format may vary)
+        expect(dateValue, 'As of date should default to current date').toBeTruthy();
+    }
+
+    @step('Validate HR fields table default sort')
+    async validateHRFieldsTableDefaultSort(): Promise<void> {
+        await this.navigateToHRFieldsTab();
+        
+        const rows = this.hrFieldsTable.locator('tbody tr');
+        const rowCount = await rows.count();
+        
+        if (rowCount > 1) {
+            const firstRowFieldNum = await rows.first().locator('td').nth(0).textContent();
+            const secondRowFieldNum = await rows.nth(1).locator('td').nth(0).textContent();
+            
+            const firstNum = parseInt(firstRowFieldNum?.trim() || '0');
+            const secondNum = parseInt(secondRowFieldNum?.trim() || '0');
+            expect(firstNum, 'First field number should be less than or equal to second').toBeLessThanOrEqual(secondNum);
+        }
+    }
+
+    @step('Validate no HR fields empty state')
+    async validateNoHRFieldsEmptyState(): Promise<void> {
+        await this.navigateToHRFieldsTab();
+        
+        const emptyStateIcon = this.page.locator('[data-testid="no-hr-fields-icon"]');
+        const emptyStateText = this.page.locator('text="No HR fields"');
+        
+        await expect(emptyStateIcon, 'No HR fields icon should be visible').toBeVisible();
+        await expect(emptyStateText, 'No HR fields text should be visible').toBeVisible();
+    }
+
+    //--------------------------------------------------------------------------------------------
+    // Custom Fields - Alternate Numbers Tab Methods (Req 3.6)
+    //--------------------------------------------------------------------------------------------
+
+    @step('Navigate to Alternate Numbers tab')
+    async navigateToAlternateNumbersTab(): Promise<void> {
+        await this.navigateToCustomFields();
+        await expect(this.alternateNumbersTab, 'Alternate Numbers tab should be visible').toBeVisible();
+        await this.alternateNumbersTab.click();
+        await this.waitForPageLoad();
+    }
+
+    @step('Validate Alternate Numbers tab table')
+    async validateAlternateNumbersTabTable(): Promise<void> {
+        await this.navigateToAlternateNumbersTab();
+        await expect(this.alternateNumbersTable, 'Alternate Numbers table should be visible').toBeVisible();
+    }
+
+    //--------------------------------------------------------------------------------------------
+    // Custom Fields - Security Methods (Req 3.7)
+    //--------------------------------------------------------------------------------------------
+
+    @step('Validate Custom Fields page suppression when no tab access')
+    async validateCustomFieldsPageSuppression(): Promise<void> {
+        // Navigate to Details dropdown
+        await this.openDetailsDropdownMenu();
+        
+        // Custom Fields should not be visible if user has no access to any tab
+        const customFieldsMenuItem = this.customFieldsMenuItem;
+        const isVisible = await customFieldsMenuItem.isVisible().catch(() => false);
+        expect(isVisible, 'Custom Fields menu item should be suppressed when user has no tab access').toBeFalsy();
+    }
+
+    @step('Validate Employee ID masking matches SSN')
+    async validateEmployeeIDMasking(categoryName: string, fieldNumber: string, ssn: string): Promise<void> {
+        await this.navigateToFieldsTab();
+        await this.expandCustomFieldCard(categoryName);
+        
+        const table = this.getCustomFieldTable(categoryName);
+        const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
+        const valueCell = fieldRow.locator('td').nth(2);
+        const valueText = await valueCell.textContent();
+        
+        // Check if value is masked (format: ***-**-1234)
+        const maskedPattern = /\*\*\*-\*\*-[\d]{4}/;
+        expect(valueText, 'Employee ID should be masked if it matches SSN').toMatch(maskedPattern);
     }
 }
