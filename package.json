@@ -11,7 +11,12 @@
     "test:proto": "playwright test --headed --workers=3 --project=proto",
     "test:preprod": "playwright test --headed --workers=3 --project=preprod",
     "test:codegen": "playwright codegen",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "history": "tsx utils/view-history.ts",
+    "history:summary": "tsx utils/view-history.ts summary",
+    "history:latest": "tsx utils/view-history.ts latest",
+    "history:stats": "tsx utils/view-history.ts stats",
+    "history:failed": "tsx utils/view-history.ts failed"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +24,8 @@
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.56.1",
-    "@types/node": "^24.9.1"
+    "@types/node": "^24.9.1",
+    "tsx": "^4.7.0"
   },
   "dependencies": {
     "dotenv": "^17.2.3",

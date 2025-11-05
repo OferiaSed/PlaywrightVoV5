@@ -353,7 +353,7 @@ test.describe('Accommodation Details General Information - Visual Regression Tes
         await details.navigateToCustomFields();
         
         // Take screenshot for visual regression testing
-        await expect(page.locator('[data-testid="custom-fields-container"]')).toHaveScreenshot('custom-fields-baseline.png');
+        await expect(page.locator('p-tabs')).toHaveScreenshot('custom-fields-baseline.png');
     });
 });
 

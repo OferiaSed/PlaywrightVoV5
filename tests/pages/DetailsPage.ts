@@ -84,7 +84,7 @@ export class DetailsPage extends BasePage {
 
     // Custom Fields specific elements
     private get customFieldsContainer(): Locator {
-        return this.page.locator('[data-testid="custom-fields-container"]');
+        return this.page.locator('p-tabs');
     }
 
     private get fieldsSection(): Locator {
@@ -105,11 +105,11 @@ export class DetailsPage extends BasePage {
     }
 
     private get hrFieldsTab(): Locator {
-        return this.page.getByRole('tab', { name: 'HR FIELDS' });
+        return this.page.locator('p-tabpanels').getByRole('tab', { name: 'HR FIELDS' });
     }
 
     private get alternateNumbersTab(): Locator {
-        return this.page.getByRole('tab', { name: 'ALTERNATE NUMBERS' });
+        return this.page.locator('p-tabpanels').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
     }
 
     private get expandAllToggle(): Locator {
