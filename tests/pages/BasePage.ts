@@ -108,6 +108,7 @@ export class BasePage{
             //Fill Text Field
             const baseDiv = await this.page.locator('div[class*="tw-items-center tw-px-0.5 tw-w-full"]').filter({ has: this.page.locator(`xpath=//label[contains(text(), '${element}')]`) });
             const inputfield = await baseDiv.locator('input');
+            await inputfield.click();
             await inputfield.clear();
             await inputfield.fill(textValue);
             
@@ -126,10 +127,17 @@ export class BasePage{
         await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     }
 
-    async getDicTableHeaders(){
-        const headers = this.page.locator('thead th');
-        const count =  await headers.count();
-        
+    @step('Is Locator Visible')
+    async isLocatorVisible(locator: Locator): Promise<boolean> {
+        try {
+            const count = await locator.count();
+            if (count === 0) {
+                return false;
+            }
+            return await locator.isVisible();
+        } catch {
+            return false;
+        }
     }
 
 
