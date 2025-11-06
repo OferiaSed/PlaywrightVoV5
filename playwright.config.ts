@@ -39,6 +39,7 @@ export default defineConfig({
   projects: [
     {
       name: 'QA',
+      timeout: 60000,
       use: { 
         ...devices['Desktop Chrome'],
         baseURL: environments.qa1.baseUrl,

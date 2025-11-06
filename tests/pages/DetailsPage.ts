@@ -101,15 +101,15 @@ export class DetailsPage extends BasePage {
     }
 
     private get fieldsTab(): Locator {
-        return this.page.locator('p-tabs').getByRole('tab', { name: 'FIELDS' }).first();
+        return this.page.getByRole('tab', { name: 'FIELDS' }).first();
     }
 
     private get hrFieldsTab(): Locator {
-        return this.page.locator('p-tabs').getByRole('tab', { name: 'HR FIELDS' });
+        return this.page.getByRole('tab', { name: 'HR FIELDS' });
     }
 
     private get alternateNumbersTab(): Locator {
-        return this.page.locator('p-tabs').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
+        return this.page.getByRole('tab', { name: 'ALTERNATE NUMBERS' });
     }
 
     private get expandAllToggle(): Locator {
