@@ -84,15 +84,15 @@ export class DetailsPage extends BasePage {
 
     // Custom Fields specific elements
     private get customFieldsContainer(): Locator {
-        return this.page.locator('p-tabs');
+        return this.page.locator('p-tabs[class*="p-tabs-scrollable"]');
     }
 
     private get fieldsSection(): Locator {
-        return this.page.locator('[data-testid="fields-section"]');
+        return this.page.locator('p-tabpanel[id*="tabpanel_fields"]');
     }
 
     private get hrDataSection(): Locator {
-        return this.page.locator('[data-testid="hr-data-section"]');
+        return this.page.locator('p-tabpanel[id*="tabpanel_HR fields"]');
     }
 
     // Custom Fields page elements - Fields Tab
@@ -101,15 +101,15 @@ export class DetailsPage extends BasePage {
     }
 
     private get fieldsTab(): Locator {
-        return this.page.getByRole('tab', { name: 'FIELDS' });
+        return this.page.locator('p-tabs').getByRole('tab', { name: 'FIELDS' }).first();
     }
 
     private get hrFieldsTab(): Locator {
-        return this.page.locator('p-tabpanels').getByRole('tab', { name: 'HR FIELDS' });
+        return this.page.locator('p-tabs').getByRole('tab', { name: 'HR FIELDS' });
     }
 
     private get alternateNumbersTab(): Locator {
-        return this.page.locator('p-tabpanels').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
+        return this.page.locator('p-tabs').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
     }
 
     private get expandAllToggle(): Locator {
@@ -360,11 +360,15 @@ export class DetailsPage extends BasePage {
     @step('Validate Custom Fields page displays Fields and HR Data sections')
     async validateCustomFieldsSections(): Promise<void> {
         await this.navigateToCustomFields();
-        
+
         // Validate Fields section is present
+        await this.fieldsTab.click();
+        await this.waitForPageLoad();
         await expect(this.fieldsSection, 'Fields section should be visible in Custom Fields').toBeVisible();
-        
+
         // Validate HR Data section is present  
+        await this.hrFieldsTab.click();
+        await this.waitForPageLoad();
         await expect(this.hrDataSection, 'HR Data section should be visible in Custom Fields').toBeVisible();
     }
 

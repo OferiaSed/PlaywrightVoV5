@@ -432,8 +432,8 @@ test.describe('Accommodations Custom Fields - Requirement 3.1: Overview', () => 
         
         // Locate tabs within p-tabs component - tabs can be anchor or button elements
         const fieldsTab = page.locator('p-tabs').locator('a, button').filter({ hasText: 'FIELDS' }).first();
-        const hrFieldsTab = page.locator('p-tabpanels').getByRole('tab', { name: 'HR FIELDS' });
-        const alternateNumbersTab = page.locator('p-tabpanels').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
+        const hrFieldsTab = page.locator('p-tabs').getByRole('tab', { name: 'HR FIELDS' });
+        const alternateNumbersTab = page.locator('p-tabs').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
         
         await expect(fieldsTab, 'FIELDS tab should be visible').toBeVisible();
         await expect(hrFieldsTab, 'HR FIELDS tab should be visible').toBeVisible();
@@ -1138,7 +1138,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.7: Security', () => 
         // This test would need user role with/without token
         await details.navigateToCustomFields();
         
-        const hrFieldsTab = page.locator('p-tabpanels').getByRole('tab', { name: 'HR FIELDS' });
+        const hrFieldsTab = page.locator('p-tabs').getByRole('tab', { name: 'HR FIELDS' });
         // Tab should be visible if user has access
         await expect(hrFieldsTab, 'HR FIELDS tab should be visible if user has access').toBeVisible();
         // Take screenshot after validation passes
@@ -1149,7 +1149,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.7: Security', () => 
         // This test would need user role with/without token
         await details.navigateToCustomFields();
         
-        const alternateNumbersTab = page.locator('p-tabpanels').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
+        const alternateNumbersTab = page.locator('p-tabs').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
         // Tab should be visible if user has access
         await expect(alternateNumbersTab, 'ALTERNATE NUMBERS tab should be visible if user has access').toBeVisible();
         // Take screenshot after validation passes
