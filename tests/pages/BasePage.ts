@@ -78,6 +78,7 @@ export class BasePage{
             }
             await this.waitForPageLoad();
             counter++;
+            console.log(`[Navigation] Go to Menu Tab: ${option}`);
         }
     }
 

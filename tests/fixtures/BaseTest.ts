@@ -5,6 +5,7 @@ import { ViewPage } from "../pages/ViewPage";
 import { CustomClaimHeader } from "../pages/CustomClaimHeader";
 import { CertificationsPage } from "../pages/CertificationsPage";
 import { HRDataAccrualsPage } from "../pages/HRDataAccrualsPage";
+import { ContactsPage } from "../pages/ContactsPage";
 import { ConsoleLogger } from '../../utils/console-logger';
 
 //Fixtures to define each POM
@@ -18,6 +19,7 @@ type MyFixtures = {
     customClaimHeader: CustomClaimHeader;
     certifications: CertificationsPage;
     hrDataAccruals: HRDataAccrualsPage;
+    contacts: ContactsPage;
     consoleLogger: ConsoleLogger;
 };
 
@@ -66,6 +68,9 @@ export const test = base.extend<MyFixtures>({
     },
     hrDataAccruals: async ({ page }, use) => {
         await use(new HRDataAccrualsPage(page));
+    },
+    contacts: async ({ page }, use) => {
+        await use(new ContactsPage(page));
     },
     consoleLogger: async ({ page }, use) => {
         await use(new ConsoleLogger(page));
