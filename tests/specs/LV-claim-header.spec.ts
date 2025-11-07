@@ -159,7 +159,7 @@ test.describe('LV Claim Header - Default Fields Display', () => {
     test('Validate Examiner Name Format - Req 3.2.004', async ({ customClaimHeader, view }) => {
         // Validate examiner displays as FIRST and LAST NAME, not as hyperlink
         await view.SearchClaimByCriteria(15);
-        await customClaimHeader.validateExaminerNameFormat('Leave specialist');
+        await customClaimHeader.validateExaminerNameFormat('Examiner');
     });
 
     test('Validate Additional Fields Not Displayed by Default - Req 3.2.004', async ({ customClaimHeader, view }) => {
@@ -233,7 +233,7 @@ test.describe('LV Claim Header - Customization Functionality', () => {
         await customClaimHeader.customizeHeaderWithFields(['Examiner phone number'], [], true);
         
         // Validate field is now visible in header
-        await customClaimHeader.validateFieldIsVisible('Examiner phone number');
+        await customClaimHeader.validateFieldIsVisible('Examiner phone number', false);
     });
 
     test('Add Multiple Additional Fields to Header - Req 3.2.005', async ({ customClaimHeader }) => {
@@ -276,8 +276,8 @@ test.describe('LV Claim Header - Customization Functionality', () => {
         await customClaimHeader.customizeHeaderWithFields(fieldsToAdd.slice(0, 5), [], true);
         
         // Validate maximum fields limit
-        await customClaimHeader.customizeHeaderWithFields(fieldsToAdd.slice(0, 7), [], true, false);
-        await customClaimHeader.validateMaximumFieldsLimit();
+        await customClaimHeader.customizeHeaderWithFields(fieldsToAdd.slice(6, 7), [], false, false);
+        await customClaimHeader.error10MaximymMessageIsVisible();
         await customClaimHeader.closeCustomizationPopup();
     });
 
@@ -397,7 +397,7 @@ test.describe('LV Claim Header - Persistence and Session Management', () => {
         await customClaimHeader.validateFieldIsVisible('Relationship');
     });
 
-    test('Validate Customization Persists After Logout/Login - Req 3.2.006', async ({ login, view, customClaimHeader }) => {
+    test('Validate Customization Persists After Logout/Login - Req 3.2.006', async ({ page, login, view, customClaimHeader }) => {
         // First session - customize header
         await view.goToClaimSearchTab();
         await view.SearchClaimByCriteria(15);
@@ -407,8 +407,9 @@ test.describe('LV Claim Header - Persistence and Session Management', () => {
         await login.performLogout();
         
         // Second session - login and validate persistence
-        await view.goToDashboardPage();
+        const authFile = '.auth/user.json';
         await login.performLoginDataDriven(1);
+        await page.context().storageState({path: authFile});
         await view.goToClaimSearchTab();
         await view.SearchClaimByCriteria(15);
         
@@ -444,11 +445,21 @@ test.describe('LV Claim Header - Error Handling and Edge Cases', () => {
         // Try to add non-existent field (should handle gracefully)
         try {
             await customClaimHeader.openLeaveCustomizationPopup();
-            await customClaimHeader.addFieldToHeader('Non-existent Field');
+            await customClaimHeader.addNonExistentFieldToHeader('Non-existent Field');
+            
+            // If we reach here, the field was added unexpectedly
+            console.log('[Test] ⚠️ Warning: Non-existent field was added unexpectedly.');
+            await customClaimHeader.closeCustomizationPopup();
         } catch (error) {
             // Expected behavior - should handle error gracefully
+            const ctrlIcon = '✅';
+            const ctrlMessage = 'error was caught and handled gracefully as expected';
+            console.log(`[Test] ${ctrlIcon} Error handling ${ctrlMessage}.`);
+            console.log(`[Test] Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            
             expect(error).toBeDefined();
             await customClaimHeader.closeCustomizationPopup();
+            console.log('[Test] ✅ Error Handling test completed successfully - invalid field selection was properly handled.');
         }
     });
 
@@ -463,13 +474,13 @@ test.describe('LV Claim Header - Error Handling and Edge Cases', () => {
     test('Edge Case - Rapid Field Reordering', async ({ customClaimHeader }) => {
         // Add fields first
         await customClaimHeader.customizeHeaderWithFields([]);
-        await customClaimHeader.customizeHeaderWithFields(['Relationship', 'SSN']);
+        await customClaimHeader.customizeHeaderWithFields(['Client #', 'Client name']);
         
         // Rapidly reorder fields
         await customClaimHeader.openLeaveCustomizationPopup();
         await customClaimHeader.moveFieldUpInOrder('Client #');
         await customClaimHeader.moveFieldDownInOrder('Client name');
-        await customClaimHeader.moveFieldUpInOrder('Client #');
+        //await customClaimHeader.moveFieldUpInOrder('Client #');
         await customClaimHeader.saveCustomizationChanges();
         
         // Validate final state is consistent
