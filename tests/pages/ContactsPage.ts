@@ -43,7 +43,7 @@ export class ContactsPage extends BasePage {
 
     public getExpandButton(rowIndex: number): Locator {
         // Look for '>' button in the far left column
-        return this.getRowByIndex(rowIndex).locator('//td[1]//button[contains(@aria-label, "Expand")]').or(this.getRowByIndex(rowIndex).locator('//td[1]//*[text()=">"]')).or(this.getRowByIndex(rowIndex).locator('//td[1]//button[contains(@class, "expand")]'));
+        return this.getRowByIndex(rowIndex).locator('//app-expand-button');
     }
 
     private getCollapseButton(rowIndex: number): Locator {
@@ -294,26 +294,6 @@ export class ContactsPage extends BasePage {
         let ctrlIcon = isCond ? '✅': '❌';
         let ctrlMessage = isCond ? `is visible (row ${rowIndex} has additional populated fields)`: `should be visible but was not found (row ${rowIndex} may not have additional populated fields)`;
         console.log(`[Contacts] ${ctrlIcon} Expand button ${ctrlMessage}.`);
-
-        /*
-        await expect(expandButton, 'Expand button should be visible for rows with additional fields').toBeVisible();
-        let ctrlIcon = '✅';
-        let ctrlMessage = `is visible (row ${rowIndex} has additional populated fields)`;
-        console.log(`[Contacts] ${ctrlIcon} Expand button ${ctrlMessage}.`);
-
-        
-        if (isVisible) {
-            await expect(expandButton, 'Expand button should be visible for rows with additional fields').toBeVisible();
-            let ctrlIcon = '✅';
-            let ctrlMessage = `is visible (row ${rowIndex} has additional populated fields)`;
-            console.log(`[Contacts] ${ctrlIcon} Expand button ${ctrlMessage}.`);
-        } else {
-            // If expand button is not visible, it means no additional fields are populated
-            let ctrlIcon = '✅';
-            let ctrlMessage = `is not visible (row ${rowIndex} has no additional fields populated)`;
-            console.log(`[Contacts] ${ctrlIcon} Expand button ${ctrlMessage}.`);
-        }
-        */
     }
 
     @step('Validate Expanded Row First Column Fields')

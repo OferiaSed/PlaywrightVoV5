@@ -1,0 +1,274 @@
+# Playwright Test Framework Rules
+
+## Project Context
+This is a Playwright test automation framework using TypeScript, Page Object Model (POM) pattern, custom fixtures, and data-driven testing with Excel files.
+
+## File Structure Rules
+
+### Test Specification Files
+- Location: `tests/specs/`
+- Naming: `{LOB}-{feature}.spec.ts` (e.g., `LV-claim-header.spec.ts`, `DS-claim-header.spec.ts`)
+- LOB prefixes: LV (Leave), DS (Disability), GL (General Liability), AU (Auto Liability), WC (Workers' compensation), etc.
+
+### Page Object Files
+- Location: `tests/pages/`
+- Naming: `{Feature}Page.ts` or descriptive name (e.g., `ContactsPage.ts`, `CustomClaimHeader.ts`)
+- Must extend `BasePage` class
+
+## Test File Structure
+
+### Required Header Comment
+Every test file MUST start with:
+```typescript
+/**
+ * {LOB} {Feature Name} Test Suite
+ * 
+ * This test suite covers the comprehensive testing of the {Feature Name} functionality
+ * as specified in User Story requirements {Req Numbers}.
+ * 
+ * Test Coverage:
+ * - Feature aspect 1 (Req X.X.XXX)
+ * - Feature aspect 2 (Req X.X.XXX)
+ * - Data-driven testing scenarios
+ */
+```
+
+### Required Imports
+```typescript
+import { test, expect } from '../fixtures/BaseTest';
+```
+
+### Test Organization
+- Use `test.describe()` blocks to group related tests by feature/sub-feature
+- Use `test.beforeEach()` for common setup within describe blocks
+- Test names format: `'{Test Description} - Req {X.X.XXX}'`
+
+### Test Structure Example
+```typescript
+test.describe('LV Feature - Sub-feature Name', () => {
+    
+    test.beforeEach(async ({ view }) => {
+        await view.goToDashboardPage();
+        await view.goToClaimSearchTab();
+    });
+
+    test('Validate Something - Req 3.X.XXX', async ({ pageObjectFixture }) => {
+        // Test implementation
+    });
+});
+```
+
+## Page Object Model Rules
+
+### Class Structure
+```typescript
+import { expect, type Locator, type Page } from '@playwright/test';
+import { BasePage } from './BasePage';
+import { step } from '../fixtures/BaseTest';
+
+export class YourPage extends BasePage {
+    private readonly name = "Your Page Name";
+    
+    constructor(page: Page) {
+        super(page);
+    }
+}
+```
+
+### Locator Organization
+- Organize locators by functional sections with clear comment separators
+- Use private getters for locators: `private get elementName(): Locator`
+- Dynamic locators: `private getElementByIndex(index: number): Locator`
+- Section comments format: `//--------------------------------------------------------------------------------------------`
+
+### Method Organization
+Group methods by purpose:
+1. **Locator Methods** (private getters)
+2. **Validation Methods** (prefix: `validate`)
+3. **Action Methods** (action verbs: click, open, add, remove, navigate)
+4. **Status Check Methods** (prefix: `get`)
+
+### Method Naming Conventions
+- **Validation**: `validate{What}()` - e.g., `validateFieldIsVisible()`, `validateBreadcrumbsDisplay()`
+- **Actions**: `{action}{What}()` - e.g., `clickPencilIcon()`, `openCustomizationPopup()`, `addFieldToHeader()`
+- **Getters**: `get{What}()` - e.g., `getCurrentHeaderFieldOrder()`, `getGridRowCount()`
+
+### Required Decorators
+- ALL public methods MUST use `@step('Description')` decorator
+- Step description should be clear and descriptive
+
+### Console Logging Pattern
+Every validation/action method MUST include structured logging:
+```typescript
+let isCond = await this.isLocatorVisible(element);
+let ctrlIcon = isCond ? '✅': '❌';
+let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+console.log(`[Page Name] ${ctrlIcon} Element ${ctrlMessage}.`);
+```
+
+### Assertion Patterns
+- Use `expect.soft()` for non-blocking validations in page object methods
+- Use `expect()` for critical assertions that should fail immediately
+- Always include descriptive error messages
+
+### Validation Method Template
+```typescript
+@step('Validate {What}')
+async validateSomething() {
+    const element = this.elementLocator;
+    
+    await expect.soft(element, 'Descriptive error message').toBeVisible();
+    let isCond = await this.isLocatorVisible(element);
+    let ctrlIcon = isCond ? '✅': '❌';
+    let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+    console.log(`[Page Name] ${ctrlIcon} Element ${ctrlMessage}.`);
+}
+```
+
+### Action Method Template
+```typescript
+@step('{Action Description}')
+async performAction() {
+    await expect.soft(this.element, 'Element should be visible').toBeVisible();
+    let isCond = await this.isLocatorVisible(this.element);
+    let ctrlIcon = isCond ? '✅': '❌';
+    let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+    console.log(`[Page Name] ${ctrlIcon} Element ${ctrlMessage}.`);
+    
+    await this.element.click();
+    await this.waitForPageLoad();
+    console.log('[Page Name] Action completed successfully.');
+}
+```
+
+## Code Standards
+
+### Naming Conventions
+- **Files**: kebab-case for test files, PascalCase for page objects
+- **Variables**: camelCase
+- **Methods**: camelCase with descriptive verbs
+- **Locators**: camelCase, descriptive names
+
+### Error Handling
+For error scenarios, use try-catch with logging:
+```typescript
+try {
+    await performAction();
+} catch (error) {
+    const ctrlIcon = '✅';
+    const ctrlMessage = 'error was caught and handled gracefully as expected';
+    console.log(`[Test] ${ctrlIcon} Error handling ${ctrlMessage}.`);
+    expect(error).toBeDefined();
+}
+```
+
+### Data-Driven Testing
+When using Excel data:
+```typescript
+import { ExcelReader } from '../../utils/helpers/excel-reader';
+
+const reader = new ExcelReader(`${this.driverPath}${this.driverFile}`);
+reader.selectDataSet('SheetName', datasetNumber);
+for(let row = 0; row < reader.count(); row++){
+    reader.useRow(row);
+    const value = reader.getValue('ColumnName', '');
+}
+```
+
+### Wait Strategies
+- Use `await this.waitForPageLoad()` after navigation
+- Use `await this.delay(ms)` sparingly (prefer explicit waits)
+- Always wait for elements before interaction
+
+## Fixtures Available
+- `login`: LoginPage
+- `home`: HomePage
+- `view`: ViewPage
+- `customClaimHeader`: CustomClaimHeader
+- `certifications`: CertificationsPage
+- `hrDataAccruals`: HRDataAccrualsPage
+- `contacts`: ContactsPage
+- `consoleLogger`: ConsoleLogger
+
+## Common Patterns
+
+### Navigation Pattern
+```typescript
+test.beforeEach(async ({ view }) => {
+    await view.goToDashboardPage();
+    await view.goToClaimSearchTab();
+    await view.SearchClaimByCriteria(datasetNumber);
+});
+```
+
+### Test with Requirement Reference
+```typescript
+test('Validate Feature - Req 3.X.XXX', async ({ pageObject, view }) => {
+    // Inline comment explaining what is being tested
+    await view.SearchClaimByCriteria(14);
+    await pageObject.validateFeature();
+});
+```
+
+### Multiple Test Scenarios
+```typescript
+test.describe('Feature - Sub-feature', () => {
+    test.beforeEach(async ({ view }) => {
+        await view.goToDashboardPage();
+        await view.goToClaimSearchTab();
+    });
+
+    test('Test Scenario 1 - Req 3.X.XXX', async ({ pageObject }) => {
+        // Test 1
+    });
+
+    test('Test Scenario 2 - Req 3.X.XXX', async ({ pageObject }) => {
+        // Test 2
+    });
+});
+```
+
+## Best Practices
+
+1. **Test Independence**: Each test must run independently
+2. **Page Object Principles**: One page object per page/component, locators are private
+3. **Reusability**: Extract common actions into reusable methods
+4. **Documentation**: Clear test names, requirement references, inline comments
+5. **Error Messages**: Descriptive messages with context
+6. **Code Organization**: Clear separation of concerns (locators, validation, actions)
+
+## When Creating New Code
+
+### For Test Files:
+1. Add comprehensive header comment with requirement references
+2. Import from `../fixtures/BaseTest`
+3. Organize with `test.describe()` blocks
+4. Use descriptive test names with requirement numbers
+5. Include `beforeEach` setup where needed
+6. Add inline comments for complex logic
+
+### For Page Objects:
+1. Extend `BasePage` class
+2. Organize locators by functional sections
+3. Use private getters for locators
+4. Add `@step` decorator to ALL public methods
+5. Implement console logging with ✅/❌ indicators
+6. Use `expect.soft()` for non-critical validations
+7. Follow naming conventions strictly
+
+## Important Notes
+
+- Always use fixtures from BaseTest, never import page objects directly
+- All page object methods must have `@step` decorator
+- Console logging format must be consistent: `[Page Name] ${ctrlIcon} Message`
+- Test names must include requirement reference: `- Req X.X.XXX`
+- Use `expect.soft()` in page objects, `expect()` in tests for critical assertions
+- Wait for page load after navigation actions
+- Use descriptive error messages in assertions
+
+## Reference Files
+- Base fixtures: `tests/fixtures/BaseTest.ts`
+- Base page: `tests/pages/BasePage.ts`
+- Example tests: `tests/specs/LV-claim-header.spec.ts`, `tests/specs/LV-contacts.spec.ts`
+- Example page objects: `tests/pages/CustomClaimHeader.ts`, `tests/pages/ContactsPage.ts`
+

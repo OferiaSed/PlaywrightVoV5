@@ -22,7 +22,7 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
 test.beforeEach(async ({ view }) => {
     await view.goToDashboardPage();
     await view.goToClaimSearchTab();
-    await view.SearchClaimByCriteria(14);
+    await view.SearchClaimByCriteria(15);
 });
 
 test.describe('LV Contacts - Page Structure and Header', () => {
