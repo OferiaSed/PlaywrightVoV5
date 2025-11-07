@@ -80,12 +80,15 @@ export class ContactsPage extends BasePage {
     //--------------------------------------------------------------------------------------------
 
     public getExpandedRowFirstColumn(rowIndex: number): Locator {
-        return this.page.locator(`//tbody//tr[${rowIndex + 1}]//following-sibling::tr[1]//td[1]//div[contains(@class, "expanded")]`).or(this.page.locator(`//tbody//tr[${rowIndex + 1}]//following-sibling::tr[1]//td[1]`));
+        return this.gridRows.nth(rowIndex).locator('app-expand-button button[aria-label *= "Collapse"]');
     }
 
     public getExpandedField(rowIndex: number, fieldName: string, column: 'first' | 'second' = 'first'): Locator {
-        const columnIndex = column === 'first' ? 1 : 2;
-        return this.page.locator(`//tbody//tr[${rowIndex + 1}]//following-sibling::tr[1]//td[${columnIndex}]//div[contains(text(), "${fieldName}")]//following-sibling::div`).or(this.page.locator(`//tbody//tr[${rowIndex + 1}]//following-sibling::tr[1]//td[${columnIndex}]//*[contains(text(), "${fieldName}")]//following-sibling::*`));
+        const columnIndex = column === 'first' ? 0 : 1;
+        const rowExpandedLocator = this.page.locator('tr div[class *= "tw-whitespace-normal"]').nth(rowIndex);
+        const panelLocator = rowExpandedLocator.locator('app-detail-panel').nth(columnIndex);
+        const fieldLocator = panelLocator.locator(`//div[text()= " ${fieldName} "]//following-sibling::div`);
+        return fieldLocator;
     }
 
     //--------------------------------------------------------------------------------------------
@@ -312,8 +315,9 @@ export class ContactsPage extends BasePage {
             
             if (isVisible) {
                 await expect.soft(fieldElement, `Expanded field "${field}" should be visible if populated`).toBeVisible();
-                let ctrlIcon = '✅';
-                let ctrlMessage = `is visible (field is populated)`;
+                let isCond = await this.isLocatorVisible(fieldElement);
+                let ctrlIcon = isCond ? '': '❌';
+                let ctrlMessage = isCond ? 'is visible (field is populated)' : 'should be visible but was not found';
                 console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" ${ctrlMessage}.`);
                 
                 // Validate format for specific fields
@@ -321,23 +325,43 @@ export class ContactsPage extends BasePage {
                     const fieldText = await fieldElement.textContent();
                     if (fieldText && fieldText.trim() !== '') {
                         const phoneRegex = /^\(\d{3}\)\s*\d{3}-\d{4}$/;
+                        const phoneMatches = phoneRegex.test(fieldText.trim());
                         expect.soft(fieldText.trim(), 'Other phone should be in format (999) 999-9999').toMatch(phoneRegex);
+                        ctrlIcon = phoneMatches ? '✅': '❌';
+                        ctrlMessage = phoneMatches 
+                            ? `is in correct format: "${fieldText.trim()}"` 
+                            : `should be in format "(999) 999-9999" but found "${fieldText.trim()}"`;
+                        console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" format ${ctrlMessage}.`);
                     }
                 } else if (field === 'Authorized begin' || field === 'Authorized end') {
                     const fieldText = await fieldElement.textContent();
                     if (fieldText && fieldText.trim() !== '') {
                         const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+                        const dateMatches = dateRegex.test(fieldText.trim());
                         expect.soft(fieldText.trim(), `${field} should be in format MM/DD/YYYY`).toMatch(dateRegex);
+                        ctrlIcon = dateMatches ? '✅': '❌';
+                        ctrlMessage = dateMatches 
+                            ? `is in correct format: "${fieldText.trim()}"` 
+                            : `should be in format "MM/DD/YYYY" but found "${fieldText.trim()}"`;
+                        console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" format ${ctrlMessage}.`);
                     }
                 } else if (field === 'Authorized') {
                     const fieldText = await fieldElement.textContent();
                     if (fieldText && fieldText.trim() !== '') {
-                        expect.soft(fieldText.trim(), 'Authorized should be Yes or No').toMatch(/^(Yes|No)$/);
+                        const authorizedRegex = /^(Yes|No)$/;
+                        const authorizedMatches = authorizedRegex.test(fieldText.trim());
+                        expect.soft(fieldText.trim(), 'Authorized should be Yes or No').toMatch(authorizedRegex);
+                        ctrlIcon = authorizedMatches ? '✅': '❌';
+                        ctrlMessage = authorizedMatches 
+                            ? `is in correct format: "${fieldText.trim()}"` 
+                            : `should be "Yes" or "No" but found "${fieldText.trim()}"`;
+                        console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" format ${ctrlMessage}.`);
                     }
                 }
+                
             } else {
                 // Field is not populated, which is acceptable
-                let ctrlIcon = '✅';
+                let ctrlIcon = '⚠️ ';
                 let ctrlMessage = 'is not visible (field is not populated)';
                 console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" ${ctrlMessage}.`);
             }
@@ -490,19 +514,20 @@ export class ContactsPage extends BasePage {
     @step('Expand Contact Row')
     async expandContactRow(rowIndex: number = 0) {
         const expandButton = this.getExpandButton(rowIndex);
-        const isVisible = await this.isLocatorVisible(expandButton);
-        
-        if (isVisible) {
-            await expandButton.click();
-            await this.delay(1000);
-            
-            // Validate expanded content is visible
-            const expandedContent = this.getExpandedRowFirstColumn(rowIndex);
-            await expect(expandedContent, 'Expanded row content should be visible').toBeVisible();
-            console.log(`[Contacts] Row ${rowIndex} expanded successfully.`);
-        } else {
-            console.log(`[Contacts] Row ${rowIndex} does not have expandable content.`);
-        }
+        await expect.soft(expandButton, 'Expand button should be visible').toBeVisible();
+        let isCond = await this.isLocatorVisible(expandButton);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Expand button ${ctrlMessage}.`);
+        await expandButton.click();
+
+        // Validate expanded content is visible
+        const expandedContent = this.getExpandedRowFirstColumn(rowIndex);
+        await expect.soft(expandedContent, 'Expanded row content should be expanded after clicking on > button').toBeVisible();
+        isCond = await this.isLocatorVisible(expandedContent);
+        ctrlIcon = isCond ? '✅': '❌';
+        ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Expanded row content ${ctrlMessage}.`);
     }
 
     @step('Collapse Contact Row')
