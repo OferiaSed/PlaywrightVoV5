@@ -13,7 +13,6 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
  * - Row expansion functionality with three sections
  * - Filter and pagination functionality
  * - Data format validation
- * - Scroll to top functionality
  * - Data-driven testing scenarios
  */
 

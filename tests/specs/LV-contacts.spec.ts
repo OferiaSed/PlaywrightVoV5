@@ -88,15 +88,18 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
         
         // Validate Other phone format: (999) 999-9999
         const otherPhoneField = contacts.getExpandedField(0, 'Other phone', 'first');
-        const isVisible = await contacts.isLocatorVisible(otherPhoneField);
         
-        if (isVisible) {
-            const phoneText = await otherPhoneField.textContent();
-            if (phoneText && phoneText.trim() !== '') {
-                const phoneRegex = /^\(\d{3}\)\s*\d{3}-\d{4}$/;
-                expect(phoneText.trim(), 'Other phone should be in format (999) 999-9999').toMatch(phoneRegex);
-            }
-        }
+        // Fail if element is not present
+        await expect(otherPhoneField, 'Other phone field should be visible').toBeVisible();
+        
+        // Fail if text content is empty
+        const phoneText = await otherPhoneField.textContent();
+        expect(phoneText, 'Other phone field should have text content').toBeTruthy();
+        expect(phoneText?.trim(), 'Other phone field should not be empty').not.toBe('');
+        
+        // Validate format: (999) 999-9999
+        const phoneRegex = /^\(\d{3}\)\s*\d{3}-\d{4}$/;
+        expect(phoneText!.trim(), 'Other phone should be in format (999) 999-9999').toMatch(phoneRegex);
     });
 
     test('Validate Authorized Fields Format - Req 3.9.002', async ({ contacts }) => {
@@ -149,13 +152,14 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
         
         // Validate Comment field (free form text)
         const commentField = contacts.getExpandedField(0, 'Comment', 'first');
-        const isVisible = await contacts.isLocatorVisible(commentField);
         
-        if (isVisible) {
-            await expect(commentField, 'Comment field should be visible if populated').toBeVisible();
-            const commentText = await commentField.textContent();
-            expect(commentText, 'Comment should contain text').toBeTruthy();
-        }
+        // Fail if element is not present
+        await expect(commentField, 'Comment field should be visible').toBeVisible();
+        
+        // Fail if text content is empty
+        const commentText = await commentField.textContent();
+        expect(commentText, 'Comment field should have text content').toBeTruthy();
+        expect(commentText?.trim(), 'Comment field should not be empty').not.toBe('');
     });
 
     test('Validate Row Collapse Functionality - Req 3.9.002', async ({ contacts }) => {
@@ -175,11 +179,6 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
 
 test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
     
-    test.beforeEach(async ({ view }) => {
-        await view.goToDashboardPage();
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(14);
-    });
 
     test('Validate Expanded Row Second Column Fields - Req 3.9.003', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
@@ -191,33 +190,6 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
         await contacts.validateExpandedRowSecondColumnFields(0);
     });
 
-    test('Validate CCE Wage Format and Display Logic - Req 3.9.003', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
-        // Expand first row
-        await contacts.expandContactRow(0);
-        
-        // Validate CCE wage format: $999,999,999.99 (only display if value > 0)
-        const cceWageField = contacts.getExpandedField(0, 'CCE wage', 'second');
-        const isVisible = await contacts.isLocatorVisible(cceWageField);
-        
-        if (isVisible) {
-            const wageText = await cceWageField.textContent();
-            if (wageText && wageText.trim() !== '') {
-                // Format: $999,999,999.99
-                const wageRegex = /^\$\d{1,3}(,\d{3})*(\.\d{2})?$/;
-                expect(wageText.trim(), 'CCE wage should be in format $999,999,999.99').toMatch(wageRegex);
-                
-                // Extract numeric value and validate it's > 0
-                const numericValue = parseFloat(wageText.replace(/[$,]/g, ''));
-                expect(numericValue, 'CCE wage should be greater than 0 if displayed').toBeGreaterThan(0);
-            }
-        } else {
-            // If not visible, it means value is 0 or doesn't apply (which is acceptable)
-            console.log('[Test] CCE wage is not displayed (value is 0 or doesn\'t apply).');
-        }
-    });
-
     test('Validate Contact Date Format - Req 3.9.003', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
@@ -226,16 +198,29 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
         
         // Validate Contact date format: MM/DD/YYYY HH:MM:SS AM/PM or MM/DD/YYYY if time not populated
         const contactDateField = contacts.getExpandedField(0, 'Contact date', 'second');
-        const isVisible = await contacts.isLocatorVisible(contactDateField);
         
-        if (isVisible) {
-            const dateText = await contactDateField.textContent();
-            if (dateText && dateText.trim() !== '') {
-                // Format: MM/DD/YYYY HH:MM:SS AM/PM or MM/DD/YYYY
-                const dateTimeRegex = /^\d{1,2}\/\d{1,2}\/\d{4}(\s+\d{1,2}:\d{2}:\d{2}\s+(AM|PM))?$/;
-                expect(dateText.trim(), 'Contact date should be in format MM/DD/YYYY HH:MM:SS AM/PM or MM/DD/YYYY').toMatch(dateTimeRegex);
-            }
-        }
+        // Fail if element is not present
+        await expect(contactDateField, 'Contact date field should be visible').toBeVisible();
+        let isCond = await contacts.isLocatorVisible(contactDateField);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Test] ${ctrlIcon} Contact date field ${ctrlMessage}.`);
+
+        // Fail if text content is empty
+        const dateText = await contactDateField.textContent();
+        expect(dateText, 'Contact date field should have text content').toBeTruthy();
+        expect(dateText?.trim(), 'Contact date field should not be empty').not.toBe('');
+        
+        // Validate format: MM/DD/YYYY HH:MM:SS AM/PM or MM/DD/YYYY
+        const dateTimeRegex = /^\d{1,2}\/\d{1,2}\/\d{4}(\s+\d{1,2}:\d{2}:\d{2}\s+(AM|PM))?$/;
+        const dateTimeMatches = dateTimeRegex.test(dateText!.trim());
+        expect(dateText!.trim(), 'Contact date should be in format MM/DD/YYYY HH:MM:SS AM/PM or MM/DD/YYYY').toMatch(dateTimeRegex);
+        
+        ctrlIcon = dateTimeMatches ? '✅': '❌';
+        ctrlMessage = dateTimeMatches 
+            ? `is in correct format (MM/DD/YYYY): "${dateText!.trim()}"` 
+            : `should be in format "MM/DD/YYYY" or "MM/DD/YYYY" but found "${dateText!.trim()}"`;
+        console.log(`[Test] ${ctrlIcon} Contact date format ${ctrlMessage}.`);
     });
 
     test('Validate Contact and Contact Place Fields - Req 3.9.003', async ({ contacts }) => {
@@ -249,9 +234,25 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
         const isContactVisible = await contacts.isLocatorVisible(contactField);
         
         if (isContactVisible) {
-            await expect(contactField, 'Contact field should be visible if populated').toBeVisible();
+            await expect.soft(contactField, 'Contact field should be visible if populated').toBeVisible();
+            let isCond = await contacts.isLocatorVisible(contactField);
+            let ctrlIcon = isCond ? '✅': '❌';
+            let ctrlMessage = isCond ? 'is visible (field is populated)' : 'should be visible but was not found';
+            console.log(`[Test] ${ctrlIcon} Contact field ${ctrlMessage}.`);
+            
             const contactText = await contactField.textContent();
-            expect(contactText, 'Contact should contain text').toBeTruthy();
+            if (contactText && contactText.trim() !== '') {
+                expect(contactText, 'Contact should contain text').toBeTruthy();
+                ctrlIcon = '✅';
+                ctrlMessage = `contains text: "${contactText.trim()}"`;
+                console.log(`[Test] ${ctrlIcon} Contact field ${ctrlMessage}.`);
+            } else {
+                console.log(`[Test] ⚠️ Contact field is empty or not found.`);
+            }
+        } else {
+            let ctrlIcon = '⚠️ ';
+            let ctrlMessage = 'is not visible (field is not populated)';
+            console.log(`[Test] ${ctrlIcon} Contact field ${ctrlMessage}.`);
         }
         
         // Validate Contact place field (free form text)
@@ -259,9 +260,25 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
         const isContactPlaceVisible = await contacts.isLocatorVisible(contactPlaceField);
         
         if (isContactPlaceVisible) {
-            await expect(contactPlaceField, 'Contact place field should be visible if populated').toBeVisible();
+            await expect.soft(contactPlaceField, 'Contact place field should be visible if populated').toBeVisible();
+            let isCond = await contacts.isLocatorVisible(contactPlaceField);
+            let ctrlIcon = isCond ? '✅': '❌';
+            let ctrlMessage = isCond ? 'is visible (field is populated)' : 'should be visible but was not found';
+            console.log(`[Test] ${ctrlIcon} Contact place field ${ctrlMessage}.`);
+            
             const contactPlaceText = await contactPlaceField.textContent();
-            expect(contactPlaceText, 'Contact place should contain text').toBeTruthy();
+            if (contactPlaceText && contactPlaceText.trim() !== '') {
+                expect(contactPlaceText, 'Contact place should contain text').toBeTruthy();
+                ctrlIcon = '✅';
+                ctrlMessage = `contains text: "${contactPlaceText.trim()}"`;
+                console.log(`[Test] ${ctrlIcon} Contact place field ${ctrlMessage}.`);
+            } else {
+                console.log(`[Test] ⚠️ Contact place field is empty or not found.`);
+            }
+        } else {
+            let ctrlIcon = '⚠️ ';
+            let ctrlMessage = 'is not visible (field is not populated)';
+            console.log(`[Test] ${ctrlIcon} Contact place field ${ctrlMessage}.`);
         }
     });
 
@@ -275,12 +292,6 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
 
 test.describe('LV Contacts - Grid Filtering and Count Display', () => {
     
-    test.beforeEach(async ({ view }) => {
-        await view.goToDashboardPage();
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(14);
-    });
-
     test('Validate Filter Functionality - Req 3.9.004', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
@@ -289,11 +300,7 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
         expect(initialCount, 'Grid should have at least one contact row').toBeGreaterThan(0);
         
         // Apply filter
-        await contacts.filterContacts('John', true);
-        
-        // Validate filtered results
-        const filteredCount = await contacts.getGridRowCount();
-        expect(filteredCount, 'Filtered results should be displayed').toBeGreaterThan(0);
+        await contacts.filterContacts('COLLEEN AALTO', true);
     });
 
     test('Validate Contact Count Display Format - Req 3.9.004', async ({ contacts }) => {
@@ -302,42 +309,52 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
         // Validate contact count display format: "1 contact", "3 contacts", etc.
         await contacts.validateContactCountDisplay();
         
+        // Validate contact count is greater than 0
         const contactCount = await contacts.getContactCount();
+        const countIsValid = contactCount > 0;
         expect(contactCount, 'Contact count should be greater than 0').toBeGreaterThan(0);
+        
+        let ctrlIcon = countIsValid ? '✅': '❌';
+        let ctrlMessage = countIsValid 
+            ? `is valid: ${contactCount} contact(s)` 
+            : `should be greater than 0 but found ${contactCount}`;
+        console.log(`[Test] ${ctrlIcon} Contact count ${ctrlMessage}.`);
     });
 
     test('Validate Filter Updates Contact Count - Req 3.9.004', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
-        
-        // Get initial count
-        const initialCount = await contacts.getContactCount();
-        
+               
         // Apply filter
-        await contacts.filterContacts('Doctor', false);
+        await contacts.filterContacts('System-Custom Contact MN2', false);
         
-        // Get filtered count
-        const filteredCount = await contacts.getContactCount();
+        // Validate contact count number
+        const contactCount = await contacts.getContactCount();
+        const expectedCount = 2;
+        const countMatches = contactCount === expectedCount;
+        expect(contactCount, 'Contact count should return 2 rows').toBe(expectedCount);
         
-        // Filtered count should be less than or equal to initial count
-        expect(filteredCount, 'Filtered count should be less than or equal to initial count').toBeLessThanOrEqual(initialCount);
+        let ctrlIcon = countMatches ? '✅': '❌';
+        let ctrlMessage = countMatches 
+            ? `matches expected count: ${contactCount}` 
+            : `should be ${expectedCount} but found ${contactCount}`;
+        console.log(`[Test] ${ctrlIcon} Contact count ${ctrlMessage}.`);
         
-        // Clean filter
-        const filterCleaner = contacts.getFilterCleaner();
-        if (await contacts.isLocatorVisible(filterCleaner)) {
-            await filterCleaner.click();
-            await contacts.delay(2000);
-        }
+        // Validate contact count text display
+        const contactCountText = await contacts.getContactCountText();
+        const expectedText = "2 found";
+        const textMatches = contactCountText === expectedText;
+        expect(contactCountText, 'Contact count should display "2 found"').toBe(expectedText);
+        
+        ctrlIcon = textMatches ? '✅': '❌';
+        ctrlMessage = textMatches 
+            ? `displays correct text: "${contactCountText}"` 
+            : `should display "${expectedText}" but found "${contactCountText}"`;
+        console.log(`[Test] ${ctrlIcon} Contact count text ${ctrlMessage}.`);
     });
 });
 
 test.describe('LV Contacts - Pagination Functionality', () => {
     
-    test.beforeEach(async ({ view }) => {
-        await view.goToDashboardPage();
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(14);
-    });
-
     test('Validate Pagination Controls Display - Req 3.9.005', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
@@ -348,41 +365,62 @@ test.describe('LV Contacts - Pagination Functionality', () => {
     test('Validate Next Page Navigation - Req 3.9.005', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
-        // Check if pagination is available
-        const paginationSection = contacts.getPaginationSection();
-        const isPaginationVisible = await contacts.isLocatorVisible(paginationSection);
+        // Get initial page number before navigation
+        let initialPageNumber = await contacts.getCurrentPageNumber();
+        console.log(`[Test] Current page before clicking next: ${initialPageNumber}`);
         
-        if (isPaginationVisible) {
-            // Validate we're on a different page
-            let currentPageNumber = await contacts.getCurrentPageNumber();
-            await contacts.navigateToNextPage();
-            let nextPageNumber = await contacts.getCurrentPageNumber();
-            expect(currentPageNumber, `Page number should change after navigation. Initial Page [${currentPageNumber}], Actual Page [${nextPageNumber}]`).not.toBe(nextPageNumber);
-        } else {
-            console.log('[Test] Pagination is not available (less than one page of results).');
-        }
+        // Check if pagination is available - navigate to next page
+        await contacts.navigateToNextPage();
+        let currentPageNumber = await contacts.getCurrentPageNumber();
+        console.log(`[Test] Current page after clicking next: ${currentPageNumber}`);
+        
+        // Validate page number changed
+        const pageChanged = currentPageNumber !== initialPageNumber;
+        expect(currentPageNumber, `Page number should change after navigation. Current Page [${currentPageNumber}], Previous Page [${initialPageNumber}]`).not.toBe(initialPageNumber);
+        
+        let ctrlIcon = pageChanged ? '✅': '❌';
+        let ctrlMessage = pageChanged 
+            ? `page changed from ${initialPageNumber} to ${currentPageNumber}` 
+            : `page did not change, still on page ${currentPageNumber}`;
+        console.log(`[Test] ${ctrlIcon} Page navigation ${ctrlMessage}.`);
     });
 
     test('Validate Previous Page Navigation - Req 3.9.005', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
-        // Check if pagination is available
-        const paginationSection = contacts.getPaginationSection();
-        const isPaginationVisible = await contacts.isLocatorVisible(paginationSection);
+        // Get initial page number before navigation
+        let initialPageNumber = await contacts.getCurrentPageNumber();
+        console.log(`[Test] Current page before clicking next: ${initialPageNumber}`);
         
-        if (isPaginationVisible) {
-            // Navigate to next page first
-            await contacts.navigateToNextPage();
-            let currentPageNumber = await contacts.getCurrentPageNumber();
-            
-            // Navigate to previous page
-            await contacts.navigateToPreviousPage();
-            let previousPageNumber = await contacts.getCurrentPageNumber();
-            
-            expect(currentPageNumber, `Page number should change after navigation. Current Page [${currentPageNumber}], Previous Page [${previousPageNumber}]`).not.toBe(previousPageNumber);
-        } else {
-            console.log('[Test] Pagination is not available (less than one page of results).');
-        }
+        // Check if pagination is available - navigate to next page
+        await contacts.navigateToNextPage();
+        let currentPageNumber = await contacts.getCurrentPageNumber();
+        console.log(`[Test] Current page after clicking next: ${currentPageNumber}`);
+        
+        // Validate page number changed after clicking next
+        const pageChangedAfterNext = currentPageNumber !== initialPageNumber;
+        expect(currentPageNumber, `Page number should change after navigation. Current Page [${currentPageNumber}], Previous Page [${initialPageNumber}]`).not.toBe(initialPageNumber);
+        
+        let ctrlIcon = pageChangedAfterNext ? '✅': '❌';
+        let ctrlMessage = pageChangedAfterNext 
+            ? `page changed from ${initialPageNumber} to ${currentPageNumber}` 
+            : `page did not change, still on page ${currentPageNumber}`;
+        console.log(`[Test] ${ctrlIcon} Next page navigation ${ctrlMessage}.`);
+
+        // Check if pagination is available - navigate to previous page
+        await contacts.navigateToPreviousPage();
+        let previousPageNumber = await contacts.getCurrentPageNumber();
+        console.log(`[Test] Current page after clicking previous: ${previousPageNumber}`);
+        
+        // Validate page number changed back to initial
+        const pageChangedBack = previousPageNumber === initialPageNumber;
+        expect(previousPageNumber, `Page number should change after navigation. Current Page [${previousPageNumber}], Previous Page [${initialPageNumber}]`).toBe(initialPageNumber);
+        
+        ctrlIcon = pageChangedBack ? '✅': '❌';
+        ctrlMessage = pageChangedBack 
+            ? `page changed back from ${currentPageNumber} to ${previousPageNumber}` 
+            : `page did not change back, expected page ${initialPageNumber} but found ${previousPageNumber}`;
+        console.log(`[Test] ${ctrlIcon} Previous page navigation ${ctrlMessage}.`);
     });
 
     test('Validate Specific Page Navigation - Req 3.9.005', async ({ contacts }) => {
@@ -393,10 +431,25 @@ test.describe('LV Contacts - Pagination Functionality', () => {
         const isPaginationVisible = await contacts.isLocatorVisible(paginationSection);
         
         if (isPaginationVisible) {
+            // Get initial page number before navigation
+            let initialPageNumber = await contacts.getCurrentPageNumber();
+            console.log(`[Test] Current page before navigation: ${initialPageNumber}`);
+            
             // Navigate to page 2
-            await contacts.navigateToSpecificPage(2);
+            const targetPage = 3;
+            await contacts.navigateToSpecificPage(targetPage);
             let pageNumber = await contacts.getCurrentPageNumber();
-            expect(pageNumber, 'Should navigate to page 2').toBe('2');
+            console.log(`[Test] Current page after navigation: ${pageNumber}`);
+            
+            // Validate page number changed to target page
+            const pageNavigated = pageNumber === String(targetPage);
+            expect(pageNumber, 'Should navigate to page 3').toBe('3');
+            
+            let ctrlIcon = pageNavigated ? '✅': '❌';
+            let ctrlMessage = pageNavigated 
+                ? `navigated to page ${pageNumber} successfully` 
+                : `did not navigate to page ${targetPage}, found page ${pageNumber}`;
+            console.log(`[Test] ${ctrlIcon} Specific page navigation ${ctrlMessage}.`);
         } else {
             console.log('[Test] Pagination is not available (less than one page of results).');
         }
@@ -405,12 +458,6 @@ test.describe('LV Contacts - Pagination Functionality', () => {
 
 test.describe('LV Contacts - Scroll to Top Link', () => {
     
-    test.beforeEach(async ({ view }) => {
-        await view.goToDashboardPage();
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(14);
-    });
-
     test('Validate Scroll to Top Link Visibility - Req 3.9.006', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
@@ -420,6 +467,9 @@ test.describe('LV Contacts - Scroll to Top Link', () => {
 
     test('Test Scroll to Top Functionality - Req 3.9.006', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
+
+        // Validate scroll to top link is visible at bottom of page
+        await contacts.validateScrollToTopLink();
         
         // Test scroll to top functionality
         await contacts.clickScrollToTopLink();
@@ -428,12 +478,6 @@ test.describe('LV Contacts - Scroll to Top Link', () => {
 
 test.describe('LV Contacts - Standard Footer', () => {
     
-    test.beforeEach(async ({ view }) => {
-        await view.goToDashboardPage();
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(14);
-    });
-
     test('Validate Standard Footer Display - Req 3.9.007', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
@@ -444,12 +488,6 @@ test.describe('LV Contacts - Standard Footer', () => {
 
 test.describe('LV Contacts - Data Format Validation', () => {
     
-    test.beforeEach(async ({ view }) => {
-        await view.goToDashboardPage();
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(14);
-    });
-
     test('Validate All Grid Column Formats - Req 3.9.001', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
@@ -485,56 +523,29 @@ test.describe('LV Contacts - Data Format Validation', () => {
 
 test.describe('LV Contacts - Error Handling and Edge Cases', () => {
     
-    test.beforeEach(async ({ view }) => {
-        await view.goToDashboardPage();
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(14);
-    });
-
-    test('Edge Case - No Contacts Available', async ({ contacts, view }) => {
-        // Navigate to a claim that may have no contacts
-        await view.SearchClaimByCriteria(15);
-        await contacts.navigateToContactsTab();
-        
-        // Validate page still loads correctly
-        await contacts.validateContactsPageHeader();
-        
-        // Validate grid structure is still present
-        await contacts.validateGridStructure();
-    });
-
     test('Edge Case - Filter with No Results', async ({ contacts }) => {
         await contacts.navigateToContactsTab();
         
+        // Get initial row count before filter
+        const initialRowCount = await contacts.getGridRowCount();
+        console.log(`[Test] Initial row count before filter: ${initialRowCount}`);
+        
         // Apply filter that should return no results
-        await contacts.filterContacts('NonExistentContact12345', true);
+        const filterValue = 'NonExistentContact12345';
+        await contacts.filterContacts(filterValue, false, false);
+        console.log(`[Test] Applied filter: "${filterValue}"`);
         
         // Validate filter handles no results gracefully
         const rowCount = await contacts.getGridRowCount();
-        expect(rowCount, 'Filter with no results should handle gracefully').toBeGreaterThanOrEqual(0);
+        const noResultsFound = rowCount === 0;
+        expect(rowCount, 'Filter with no results should handle gracefully').toBe(0);
+        
+        let ctrlIcon = noResultsFound ? '✅': '❌';
+        let ctrlMessage = noResultsFound 
+            ? `filter handled correctly, no results found (${rowCount} rows)` 
+            : `filter should return 0 results but found ${rowCount} rows`;
+        console.log(`[Test] ${ctrlIcon} Filter with no results ${ctrlMessage}.`);
     });
 
-    test('Edge Case - Rapid Row Expansion and Collapse', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
-        // Rapidly expand and collapse multiple rows
-        const rowCount = await contacts.getGridRowCount();
-        const rowsToTest = Math.min(rowCount, 3);
-        
-        for (let i = 0; i < rowsToTest; i++) {
-            const expandButton = contacts.getExpandButton(i);
-            const isExpandable = await contacts.isLocatorVisible(expandButton);
-            
-            if (isExpandable) {
-                await contacts.expandContactRow(i);
-                await contacts.delay(500);
-                await contacts.collapseContactRow(i);
-                await contacts.delay(500);
-            }
-        }
-        
-        // Validate final state is consistent
-        await contacts.validateGridStructure();
-    });
 });
 

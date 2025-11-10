@@ -43,11 +43,11 @@ export class ContactsPage extends BasePage {
 
     public getExpandButton(rowIndex: number): Locator {
         // Look for '>' button in the far left column
-        return this.getRowByIndex(rowIndex).locator('//app-expand-button');
+        return this.getRowByIndex(rowIndex).locator('app-expand-button button[aria-label*="Expand "]');
     }
 
     private getCollapseButton(rowIndex: number): Locator {
-        return this.getRowByIndex(rowIndex).locator('//td//button[contains(@aria-label, "Collapse")]').or(this.getRowByIndex(rowIndex).locator('//td[1]//button[contains(@class, "collapse")]'));
+        return this.getRowByIndex(rowIndex).locator('app-expand-button button[aria-label*="Collapse "]');
     }
 
     // Grid Column Locators
@@ -108,7 +108,7 @@ export class ContactsPage extends BasePage {
     }
 
     private get contactCount(): Locator {
-        return this.page.locator('//app-table//div[contains(@class, "tw-font-bold tw-text")]').or(this.page.locator('//div[contains(text(), "contact") and contains(@class, "count")]'));
+        return this.page.locator('//app-table//div[contains(@class, "tw-font-bold tw-text")]');
     }
 
     //--------------------------------------------------------------------------------------------
@@ -140,7 +140,7 @@ export class ContactsPage extends BasePage {
     }
 
     private get currentPageSelected(): Locator {
-        return this.paginationSection.locator('span button[aria-current = "page"]');
+        return this.paginationSection.locator('button[aria-current="page"]');
     }
 
     public getPaginationSection(): Locator {
@@ -151,8 +151,8 @@ export class ContactsPage extends BasePage {
     // Scroll to Top Locators
     //--------------------------------------------------------------------------------------------
 
-    private get scrollToTopLink(): Locator {
-        return this.page.getByRole('link', { name: /scroll to top/i }).or(this.page.locator('//a[contains(text(), "Scroll to top") or contains(text(), "scroll to top")]'));
+    private get scrollToTopButton(): Locator {
+        return this.page.getByRole('button', { name: 'Scroll to top of page' });
     }
 
     //--------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ export class ContactsPage extends BasePage {
     //--------------------------------------------------------------------------------------------
 
     private get standardFooter(): Locator {
-        return this.page.locator('//app-footer | //footer | //div[contains(@class, "footer")]');
+        return this.page.locator('app-footer');
     }
 
     //--------------------------------------------------------------------------------------------
@@ -383,8 +383,9 @@ export class ContactsPage extends BasePage {
             
             if (isVisible) {
                 await expect.soft(fieldElement, `Expanded field "${field}" should be visible if populated`).toBeVisible();
-                let ctrlIcon = '✅';
-                let ctrlMessage = `is visible (field is populated)`;
+                let isCond = await this.isLocatorVisible(fieldElement);
+                let ctrlIcon = isCond ? '': '❌';
+                let ctrlMessage = isCond ? 'is visible (field is populated)' : 'should be visible but was not found';
                 console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" ${ctrlMessage}.`);
                 
                 // Validate format for specific fields
@@ -393,19 +394,32 @@ export class ContactsPage extends BasePage {
                     if (fieldText && fieldText.trim() !== '') {
                         // Only display if value > 0, format: $999,999,999.99
                         const wageRegex = /^\$\d{1,3}(,\d{3})*(\.\d{2})?$/;
+                        const wageMatches = wageRegex.test(fieldText.trim());
                         expect.soft(fieldText.trim(), 'CCE wage should be in format $999,999,999.99').toMatch(wageRegex);
+                        ctrlIcon = wageMatches ? '✅': '❌';
+                        ctrlMessage = wageMatches 
+                            ? `is in correct format: "${fieldText.trim()}"` 
+                            : `should be in format "$999,999,999.99" but found "${fieldText.trim()}"`;
+                        console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" format ${ctrlMessage}.`);
                     }
                 } else if (field === 'Contact date') {
                     const fieldText = await fieldElement.textContent();
                     if (fieldText && fieldText.trim() !== '') {
                         // Format: MM/DD/YYYY HH:MM:SS AM/PM or MM/DD/YYYY if time not populated
                         const dateTimeRegex = /^\d{1,2}\/\d{1,2}\/\d{4}(\s+\d{1,2}:\d{2}:\d{2}\s+(AM|PM))?$/;
+                        const dateTimeMatches = dateTimeRegex.test(fieldText.trim());
                         expect.soft(fieldText.trim(), 'Contact date should be in format MM/DD/YYYY HH:MM:SS AM/PM or MM/DD/YYYY').toMatch(dateTimeRegex);
+                        ctrlIcon = dateTimeMatches ? '✅': '❌';
+                        ctrlMessage = dateTimeMatches 
+                            ? `is in correct format: "${fieldText.trim()}"` 
+                            : `should be in format "MM/DD/YYYY HH:MM:SS AM/PM" or "MM/DD/YYYY" but found "${fieldText.trim()}"`;
+                        console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" format ${ctrlMessage}.`);
                     }
                 }
+                
             } else {
                 // Field is not populated, which is acceptable
-                let ctrlIcon = '✅';
+                let ctrlIcon = '⚠️ ';
                 let ctrlMessage = 'is not visible (field is not populated)';
                 console.log(`[Contacts] ${ctrlIcon} Expanded field "${field}" ${ctrlMessage}.`);
             }
@@ -413,31 +427,51 @@ export class ContactsPage extends BasePage {
     }
 
     @step('Validate Filter Functionality')
-    async validateFilterFunctionality(filterValue: string, cleanFilter = true) {
+    async validateFilterFunctionality(filterValue: string, cleanFilter = true, validateFilter = true) {
         const filterButton = this.filterButton;
         const filterInput = this.filterInput;
         
+        // Validate filter button visibility
         await expect(filterButton, 'Filter button should be visible').toBeVisible();
+        let isCond = await this.isLocatorVisible(filterButton);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Filter button ${ctrlMessage}.`);
+        
+        // Click filter button
         await filterButton.click();
+        console.log(`[Contacts] Filter button clicked successfully.`);
+        
+        // Validate filter input visibility and fill
+        await expect.soft(filterInput, 'Filter input should be visible').toBeVisible();
+        isCond = await this.isLocatorVisible(filterInput);
+        ctrlIcon = isCond ? '✅': '❌';
+        ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Filter input ${ctrlMessage}.`);
+        
         await filterInput.fill(filterValue);
         await this.page.keyboard.press('Enter');
         await this.delay(2000);
+        console.log(`[Contacts] Filter value "${filterValue}" applied successfully.`);
         
         // Validate filtered results
-        const filteredRows = this.gridRows;
-        const rowCount = await filteredRows.count();
-        expect(rowCount, `Should have filtered results for "${filterValue}"`).toBeGreaterThan(0);
-        
-        let isCond = rowCount > 0;
-        let ctrlIcon = isCond ? '✅': '❌';
-        let ctrlMessage = isCond ? `filtered results found (${rowCount} rows)` : `no filtered results found`;
-        console.log(`[Contacts] ${ctrlIcon} Filter "${filterValue}" ${ctrlMessage}.`);
+        if(validateFilter){
+            const filteredRows = this.gridRows;
+            const rowCount = await filteredRows.count();
+            expect.soft(rowCount, `Should have filtered results for "${filterValue}"`).toBeGreaterThan(0);
+            
+            isCond = rowCount > 0;
+            ctrlIcon = isCond ? '✅': '❌';
+            ctrlMessage = isCond ? `filtered results found (${rowCount} rows)` : `no filtered results found`;
+            console.log(`[Contacts] ${ctrlIcon} Filter "${filterValue}" ${ctrlMessage}.`);
+        }
 
         if(cleanFilter){
             const filterCleaner = this.getFilterCleaner();
             if (await this.isLocatorVisible(filterCleaner)) {
                 await filterCleaner.click();
                 await this.delay(2000);
+                console.log(`[Contacts] Filter cleared successfully.`);
             }
         }
     }
@@ -448,23 +482,54 @@ export class ContactsPage extends BasePage {
         
         if (isPaginationVisible) {
             await expect(this.paginationSection, 'Pagination section should be visible').toBeVisible();
+            let isCond = await this.isLocatorVisible(this.paginationSection);
+            let ctrlIcon = isCond ? '✅': '❌';
+            let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+            console.log(`[Contacts] ${ctrlIcon} Pagination section ${ctrlMessage}.`);
             
             // Check if pagination is needed (more than one page)
             const pageNumbers = this.pageNumbers;
             const pageCount = await pageNumbers.count();
             
             if (pageCount > 1) {
+                // Validate First page button
                 await expect.soft(this.firstPageButton, 'First page button should be visible').toBeVisible();
+                isCond = await this.isLocatorVisible(this.firstPageButton);
+                ctrlIcon = isCond ? '✅': '❌';
+                ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+                console.log(`[Contacts] ${ctrlIcon} First page button ${ctrlMessage}.`);
+                
+                // Validate Next page button
                 await expect.soft(this.nextPageButton, 'Next page button should be visible').toBeVisible();
+                isCond = await this.isLocatorVisible(this.nextPageButton);
+                ctrlIcon = isCond ? '✅': '❌';
+                ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+                console.log(`[Contacts] ${ctrlIcon} Next page button ${ctrlMessage}.`);
+                
+                // Validate Previous page button
                 await expect.soft(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
+                isCond = await this.isLocatorVisible(this.previousPageButton);
+                ctrlIcon = isCond ? '✅': '❌';
+                ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+                console.log(`[Contacts] ${ctrlIcon} Previous page button ${ctrlMessage}.`);
+                
+                // Validate Last page button
                 await expect.soft(this.lastPageButton, 'Last page button should be visible').toBeVisible();
+                isCond = await this.isLocatorVisible(this.lastPageButton);
+                ctrlIcon = isCond ? '✅': '❌';
+                ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+                console.log(`[Contacts] ${ctrlIcon} Last page button ${ctrlMessage}.`);
+                
+                ctrlIcon = '✅';
+                ctrlMessage = `is visible and functional (${pageCount} pages)`;
+                console.log(`[Contacts] ${ctrlIcon} Pagination controls ${ctrlMessage}.`);
+            } else {
+                ctrlIcon = '✅';
+                ctrlMessage = 'is visible (single page, navigation buttons not needed)';
+                console.log(`[Contacts] ${ctrlIcon} Pagination controls ${ctrlMessage}.`);
             }
-            
-            let ctrlIcon = '✅';
-            let ctrlMessage = 'is visible and functional';
-            console.log(`[Contacts] ${ctrlIcon} Pagination controls ${ctrlMessage}.`);
         } else {
-            let ctrlIcon = '✅';
+            let ctrlIcon = '⚠️ ';
             let ctrlMessage = 'is not visible (pagination not needed)';
             console.log(`[Contacts] ${ctrlIcon} Pagination controls ${ctrlMessage}.`);
         }
@@ -472,29 +537,27 @@ export class ContactsPage extends BasePage {
 
     @step('Validate Scroll to Top Link')
     async validateScrollToTopLink() {
+        // Select 10 rows per page
+        await this.dropdownNavigationPanel("10");
+        console.log(`[Contacts] Selected 10 rows per page.`);
+
         // Scroll to bottom first
         await this.scrollToBottom();
         await this.delay(1000);
+        console.log(`[Contacts] Scrolled to bottom of page.`);
         
-        const scrollToTopLink = this.scrollToTopLink;
-        const isVisible = await this.isLocatorVisible(scrollToTopLink);
+        const scrollToTopLink = this.scrollToTopButton;
+        await expect(scrollToTopLink, 'Scroll to top link should be visible at bottom of page').toBeVisible();
         
-        if (isVisible) {
-            await expect(scrollToTopLink, 'Scroll to top link should be visible at bottom of page').toBeVisible();
-            let ctrlIcon = '✅';
-            let ctrlMessage = 'is visible at bottom of page';
-            console.log(`[Contacts] ${ctrlIcon} Scroll to top link ${ctrlMessage}.`);
-        } else {
-            // Link may not be visible if page is short
-            let ctrlIcon = '✅';
-            let ctrlMessage = 'is not visible (page may be short)';
-            console.log(`[Contacts] ${ctrlIcon} Scroll to top link ${ctrlMessage}.`);
-        }
+        let isCond = await this.isLocatorVisible(scrollToTopLink);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible at bottom of page' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Scroll to top link ${ctrlMessage}.`);
     }
 
     @step('Validate Standard Footer')
     async validateStandardFooter() {
-        await expect(this.standardFooter, 'Standard footer should be visible').toBeVisible();
+        await expect.soft(this.standardFooter, 'Standard footer should be visible').toBeVisible();
         let isCond = await this.isLocatorVisible(this.standardFooter);
         let ctrlIcon = isCond ? '✅': '❌';
         let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
@@ -509,6 +572,7 @@ export class ContactsPage extends BasePage {
     async navigateToContactsTab() {
         await this.selectTabMenu('DETAILS;CONTACTS', true);
         await this.waitForPageLoad();
+        await this.delay(2000);
     }
 
     @step('Expand Contact Row')
@@ -547,65 +611,81 @@ export class ContactsPage extends BasePage {
     }
 
     @step('Filter Contacts')
-    async filterContacts(filterValue: string, cleanFilter = true) {
-        await this.validateFilterFunctionality(filterValue, cleanFilter);
+    async filterContacts(filterValue: string, cleanFilter = true, validateFilter = true) {
+        await this.validateFilterFunctionality(filterValue, cleanFilter, validateFilter);
     }
 
     @step('Navigate to Next Page')
     async navigateToNextPage() {
-        const isVisible = await this.isLocatorVisible(this.nextPageButton);
-        if (isVisible) {
-            await expect(this.nextPageButton, 'Next page button should be visible').toBeVisible();
-            await this.nextPageButton.click();
-            await this.delay(2000);
-        }
+        await expect.soft(this.nextPageButton, 'Next page button should be visible').toBeVisible();
+        let isCond = await this.isLocatorVisible(this.nextPageButton);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Next page button ${ctrlMessage}.`);
+        
+        await this.nextPageButton.click();
+        await this.delay(2000);
+        console.log(`[Contacts] ✅ Navigated to next page successfully.`);
     }
 
     @step('Navigate to Previous Page')
     async navigateToPreviousPage() {
-        const isVisible = await this.isLocatorVisible(this.previousPageButton);
-        if (isVisible) {
-            await expect(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
-            await this.previousPageButton.click();
-            await this.delay(2000);
-        }
+        await expect.soft(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
+        
+        let isCond = await this.isLocatorVisible(this.previousPageButton);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Previous page button ${ctrlMessage}.`);
+        
+        await this.previousPageButton.click();
+        await this.delay(2000);
+        console.log(`[Contacts] ✅ Navigated to previous page successfully.`);
     }
 
     @step('Navigate to Specific Page')
     async navigateToSpecificPage(pageNumber: number) {
         const pageButton = this.pageNumbers.nth(pageNumber - 1);
-        const isVisible = await this.isLocatorVisible(pageButton);
-        if (isVisible) {
-            await expect(pageButton, `Page ${pageNumber} button should be visible`).toBeVisible();
-            await pageButton.click();
-            await this.delay(2000);
-        }
+        await expect.soft(pageButton, `Page ${pageNumber} button should be visible`).toBeVisible();
+        
+        let isCond = await this.isLocatorVisible(pageButton);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Page ${pageNumber} button ${ctrlMessage}.`);
+        
+        await pageButton.click();
+        await this.delay(2000);
+        console.log(`[Contacts] ✅ Navigated to page ${pageNumber} successfully.`);
     }
 
     @step('Click Scroll to Top Link')
     async clickScrollToTopLink() {
-        // Scroll to bottom first
-        await this.scrollToBottom();
-        await this.delay(1000);
+        // Get scroll position before clicking
+        const scrollToTopLink = this.scrollToTopButton;
+        const scrollPositionBefore = await this.page.evaluate(() => window.scrollY);
+        console.log(`[Contacts] Scroll position before clicking: ${scrollPositionBefore}px.`);
         
-        const scrollToTopLink = this.scrollToTopLink;
-        const isVisible = await this.isLocatorVisible(scrollToTopLink);
+        // Validate link visibility
+        await expect.soft(scrollToTopLink, 'Scroll to top link should be visible').toBeVisible();
+        let isCond = await this.isLocatorVisible(scrollToTopLink);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Scroll to top link ${ctrlMessage}.`);
         
-        if (isVisible) {
-            // Get scroll position before clicking
-            const scrollPositionBefore = await this.page.evaluate(() => window.scrollY);
-            
-            await expect(scrollToTopLink, 'Scroll to top link should be visible').toBeVisible();
-            await scrollToTopLink.click();
-            await this.delay(1000);
-            
-            // Validate page scrolled to top
-            const scrollPositionAfter = await this.page.evaluate(() => window.scrollY);
-            expect(scrollPositionAfter, 'Page should be scrolled to top').toBe(0);
-            console.log(`[Contacts] Scroll to top link clicked successfully. Scroll position changed from ${scrollPositionBefore} to ${scrollPositionAfter}.`);
-        } else {
-            console.log(`[Contacts] Scroll to top link is not visible (page may be short).`);
-        }
+        // Click the link
+        await scrollToTopLink.click();
+        await this.delay(2000);
+        console.log(`[Contacts] Scroll to top link clicked successfully.`);
+        
+        // Validate page scrolled to top
+        const scrollPositionAfter = await this.page.evaluate(() => window.scrollY);
+        const scrolledToTop = scrollPositionAfter === 0;
+        expect.soft(scrollPositionAfter, 'Page should be scrolled to top').toBe(0);
+        
+        ctrlIcon = scrolledToTop ? '✅': '❌';
+        ctrlMessage = scrolledToTop 
+            ? `scrolled to top successfully (from ${scrollPositionBefore}px to ${scrollPositionAfter}px)` 
+            : `did not scroll to top, scroll position is ${scrollPositionAfter}px (expected 0px)`;
+        console.log(`[Contacts] ${ctrlIcon} Page scroll ${ctrlMessage}.`);
     }
 
     //--------------------------------------------------------------------------------------------
@@ -624,7 +704,12 @@ export class ContactsPage extends BasePage {
         }
     }
 
-    @step('Get Name Column Text')
+    @step('Get Contact Count Text')
+    async getContactCountText(): Promise<string> {
+        const countText = await this.contactCount.textContent();
+        return countText?.trim() || '';
+    }
+
     @step('Get Contact Count')
     async getContactCount(): Promise<number> {
         const countText = await this.contactCount.textContent();
@@ -639,13 +724,17 @@ export class ContactsPage extends BasePage {
 
     @step('Get Current Page Number')
     async getCurrentPageNumber(): Promise<string> {
-        const isVisible = await this.isLocatorVisible(this.currentPageSelected);
-        if (isVisible) {
-            await expect(this.currentPageSelected, 'Current page should be visible').toBeVisible();
-            const countText = await this.currentPageSelected.textContent();
-            return countText?.trim() || '';
-        }
-        return '1';
+        await expect.soft(this.currentPageSelected, 'Current page should be visible').toBeVisible();
+        
+        let isCond = await this.isLocatorVisible(this.currentPageSelected);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Contacts] ${ctrlIcon} Current page indicator ${ctrlMessage}.`);
+        
+        const countText = await this.currentPageSelected.textContent();
+        const pageNumber = countText?.trim() || '';
+        
+        return pageNumber;
     }
 
     //--------------------------------------------------------------------------------------------

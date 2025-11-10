@@ -82,7 +82,6 @@ export class BasePage{
         }
     }
 
-
     @step('Dropdown - Multi Select')
     async dropdownMultiSelect(dropdownName: string, optionToSelect: string): Promise<void> {
         if(optionToSelect != ""){
@@ -141,6 +140,27 @@ export class BasePage{
         }
     }
 
+    @step('Dropdown - Navigation Panel')
+    async dropdownNavigationPanel(optionToSelect: string): Promise<void> {
+        if(optionToSelect != ""){
+            //Expand Dropdown
+            const dropdownButton = await this.page.locator('p-paginator p-select');
+            const expandedList = await this.page.locator('ul[role="listbox"]');
+            const counter = await dropdownButton.count();
+            await expect(dropdownButton, `Navigation Dropdown Button should exist and be visible.`).toBeVisible();
+            await dropdownButton.click();
+            await expect(expandedList, `Dropdown options should exist and be visible.`).toBeVisible();
+
+            //Select Options
+            const options = optionToSelect.split(';');
+            for (const option of options) {
+                const element = await this.page.getByRole('option', { name: option, exact: true });
+                await expect(element, `Option "${element}"should exist and be visible.`).toBeVisible();
+                await element.click();
+                await this.delay(2000);
+            }
+        }
+    }
 
 
 
