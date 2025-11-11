@@ -21,7 +21,7 @@ import { test, expect } from '../fixtures/BaseTest';
 test.beforeEach(async ({ view, contacts }) => {
     await view.goToDashboardPage();
     await view.goToClaimSearchTab();
-    await view.SearchClaimByCriteria(15);
+    await view.SearchClaimByCriteria(13);
     await contacts.navigateToContactsTab();
 });
 
@@ -42,7 +42,16 @@ test.describe('LV Contacts - Page Structure and Header', () => {
         // Validate grid has rows
         await contacts.waitTableToBeLoaded();
         const rowCount = await contacts.getGridRowCount();
+        
+        // Validate row count is greater than 0
+        const countIsValid = rowCount > 0;
         await expect(rowCount, 'Grid should have at least one contact row').toBeGreaterThan(0);
+        
+        let ctrlIcon = countIsValid ? '✅': '❌';
+        let ctrlMessage = countIsValid 
+            ? `found (${rowCount} rows)` 
+            : `no rows found (expected at least 1, found ${rowCount})`;
+        console.log(`[Test] ${ctrlIcon} Grid rows ${ctrlMessage}.`);
         
         // Validate data format for first row
         await contacts.validateGridRowDataFormat(0);
@@ -77,16 +86,39 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
         const otherPhoneField = contacts.getExpandedField(0, 'Other phone', 'first');
         
         // Fail if element is not present
-        await expect(otherPhoneField, 'Other phone field should be visible').toBeVisible();
+        await expect.soft(otherPhoneField, 'Other phone field should be visible').toBeVisible();
+        let isCond = await contacts.isLocatorVisible(otherPhoneField);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Test] ${ctrlIcon} Other phone field ${ctrlMessage}.`);
         
         // Fail if text content is empty
         const phoneText = await otherPhoneField.textContent();
-        expect(phoneText, 'Other phone field should have text content').toBeTruthy();
-        expect(phoneText?.trim(), 'Other phone field should not be empty').not.toBe('');
+        const hasTextContent = !!phoneText;
+        expect.soft(phoneText, 'Other phone field should have text content').toBeTruthy();
+        
+        ctrlIcon = hasTextContent ? '✅': '❌';
+        ctrlMessage = hasTextContent ? 'has text content' : 'should have text content but was empty';
+        console.log(`[Test] ${ctrlIcon} Other phone field ${ctrlMessage}.`);
+        
+        const isNotEmpty = phoneText?.trim() !== '';
+        expect.soft(phoneText?.trim(), 'Other phone field should not be empty').not.toBe('');
+        
+        ctrlIcon = isNotEmpty ? '✅': '❌';
+        ctrlMessage = isNotEmpty ? 'is not empty' : 'should not be empty but was empty';
+        console.log(`[Test] ${ctrlIcon} Other phone field ${ctrlMessage}.`);
         
         // Validate format: (999) 999-9999
         const phoneRegex = /^\(\d{3}\)\s*\d{3}-\d{4}$/;
-        expect(phoneText!.trim(), 'Other phone should be in format (999) 999-9999').toMatch(phoneRegex);
+        const phoneTextTrimmed = phoneText!.trim();
+        const formatMatches = phoneRegex.test(phoneTextTrimmed);
+        expect.soft(phoneTextTrimmed, 'Other phone should be in format (999) 999-9999').toMatch(phoneRegex);
+        
+        ctrlIcon = formatMatches ? '✅': '❌';
+        ctrlMessage = formatMatches 
+            ? `is in correct format: "${phoneTextTrimmed}"` 
+            : `should be in format "(999) 999-9999" but found "${phoneTextTrimmed}"`;
+        console.log(`[Test] ${ctrlIcon} Other phone format ${ctrlMessage}.`);
     });
 
     test('Validate Authorized Fields Format - Req 3.9.002', async ({ contacts }) => {
@@ -98,10 +130,29 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
         const isVisible = await contacts.isLocatorVisible(authorizedField);
         
         if (isVisible) {
+            let ctrlIcon = '✅';
+            let ctrlMessage = 'is visible (field is populated)';
+            console.log(`[Test] ${ctrlIcon} Authorized field ${ctrlMessage}.`);
+            
             const authorizedText = await authorizedField.textContent();
             if (authorizedText && authorizedText.trim() !== '') {
-                expect(authorizedText.trim(), 'Authorized should be Yes or No').toMatch(/^(Yes|No)$/);
+                const authorizedTextTrimmed = authorizedText.trim();
+                const authorizedRegex = /^(Yes|No)$/;
+                const formatMatches = authorizedRegex.test(authorizedTextTrimmed);
+                expect.soft(authorizedTextTrimmed, 'Authorized should be Yes or No').toMatch(authorizedRegex);
+                
+                ctrlIcon = formatMatches ? '✅': '❌';
+                ctrlMessage = formatMatches 
+                    ? `is in correct format: "${authorizedTextTrimmed}"` 
+                    : `should be "Yes" or "No" but found "${authorizedTextTrimmed}"`;
+                console.log(`[Test] ${ctrlIcon} Authorized field format ${ctrlMessage}.`);
+            } else {
+                console.log(`[Test] ⚠️ Authorized field is empty or not found.`);
             }
+        } else {
+            let ctrlIcon = '⚠️';
+            let ctrlMessage = 'is not visible (field is not populated)';
+            console.log(`[Test] ${ctrlIcon} Authorized field ${ctrlMessage}.`);
         }
         
         // Validate Authorized begin format: MM/DD/YYYY
@@ -109,11 +160,29 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
         const isAuthBeginVisible = await contacts.isLocatorVisible(authBeginField);
         
         if (isAuthBeginVisible) {
+            let ctrlIcon = '✅';
+            let ctrlMessage = 'is visible (field is populated)';
+            console.log(`[Test] ${ctrlIcon} Authorized begin field ${ctrlMessage}.`);
+            
             const authBeginText = await authBeginField.textContent();
             if (authBeginText && authBeginText.trim() !== '') {
+                const authBeginTextTrimmed = authBeginText.trim();
                 const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-                expect(authBeginText.trim(), 'Authorized begin should be in format MM/DD/YYYY').toMatch(dateRegex);
+                const formatMatches = dateRegex.test(authBeginTextTrimmed);
+                expect.soft(authBeginTextTrimmed, 'Authorized begin should be in format MM/DD/YYYY').toMatch(dateRegex);
+                
+                ctrlIcon = formatMatches ? '✅': '❌';
+                ctrlMessage = formatMatches 
+                    ? `is in correct format: "${authBeginTextTrimmed}"` 
+                    : `should be in format "MM/DD/YYYY" but found "${authBeginTextTrimmed}"`;
+                console.log(`[Test] ${ctrlIcon} Authorized begin format ${ctrlMessage}.`);
+            } else {
+                console.log(`[Test] ⚠️ Authorized begin field is empty or not found.`);
             }
+        } else {
+            let ctrlIcon = '⚠️';
+            let ctrlMessage = 'is not visible (field is not populated)';
+            console.log(`[Test] ${ctrlIcon} Authorized begin field ${ctrlMessage}.`);
         }
         
         // Validate Authorized end format: MM/DD/YYYY
@@ -121,11 +190,29 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
         const isAuthEndVisible = await contacts.isLocatorVisible(authEndField);
         
         if (isAuthEndVisible) {
+            let ctrlIcon = '✅';
+            let ctrlMessage = 'is visible (field is populated)';
+            console.log(`[Test] ${ctrlIcon} Authorized end field ${ctrlMessage}.`);
+            
             const authEndText = await authEndField.textContent();
             if (authEndText && authEndText.trim() !== '') {
+                const authEndTextTrimmed = authEndText.trim();
                 const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-                expect(authEndText.trim(), 'Authorized end should be in format MM/DD/YYYY').toMatch(dateRegex);
+                const formatMatches = dateRegex.test(authEndTextTrimmed);
+                expect.soft(authEndTextTrimmed, 'Authorized end should be in format MM/DD/YYYY').toMatch(dateRegex);
+                
+                ctrlIcon = formatMatches ? '✅': '❌';
+                ctrlMessage = formatMatches 
+                    ? `is in correct format: "${authEndTextTrimmed}"` 
+                    : `should be in format "MM/DD/YYYY" but found "${authEndTextTrimmed}"`;
+                console.log(`[Test] ${ctrlIcon} Authorized end format ${ctrlMessage}.`);
+            } else {
+                console.log(`[Test] ⚠️ Authorized end field is empty or not found.`);
             }
+        } else {
+            let ctrlIcon = '⚠️';
+            let ctrlMessage = 'is not visible (field is not populated)';
+            console.log(`[Test] ${ctrlIcon} Authorized end field ${ctrlMessage}.`);
         }
     });
 
@@ -137,12 +224,27 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
         const commentField = contacts.getExpandedField(0, 'Comment', 'first');
         
         // Fail if element is not present
-        await expect(commentField, 'Comment field should be visible').toBeVisible();
+        await expect.soft(commentField, 'Comment field should be visible').toBeVisible();
+        let isCond = await contacts.isLocatorVisible(commentField);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Test] ${ctrlIcon} Comment field ${ctrlMessage}.`);
         
         // Fail if text content is empty
         const commentText = await commentField.textContent();
-        expect(commentText, 'Comment field should have text content').toBeTruthy();
-        expect(commentText?.trim(), 'Comment field should not be empty').not.toBe('');
+        const hasTextContent = !!commentText;
+        expect.soft(commentText, 'Comment field should have text content').toBeTruthy();
+        
+        ctrlIcon = hasTextContent ? '✅': '❌';
+        ctrlMessage = hasTextContent ? 'has text content' : 'should have text content but was empty';
+        console.log(`[Test] ${ctrlIcon} Comment field ${ctrlMessage}.`);
+        
+        const isNotEmpty = commentText?.trim() !== '';
+        expect.soft(commentText?.trim(), 'Comment field should not be empty').not.toBe('');
+        
+        ctrlIcon = isNotEmpty ? '✅': '❌';
+        ctrlMessage = isNotEmpty ? 'is not empty' : 'should not be empty but was empty';
+        console.log(`[Test] ${ctrlIcon} Comment field ${ctrlMessage}.`);
     });
 
     test('Validate Row Collapse Functionality - Req 3.9.002', async ({ contacts }) => {
@@ -154,7 +256,12 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
         
         // Validate expanded content is hidden
         const expandedContent = contacts.getExpandedRowFirstColumn(0);
-        await expect(expandedContent, 'Expanded row content should be hidden after collapse').toBeHidden();
+        await expect.soft(expandedContent, 'Expanded row content should be hidden after collapse').toBeHidden();
+        
+        const isHidden = !(await contacts.isLocatorVisible(expandedContent));
+        let ctrlIcon = isHidden ? '✅': '❌';
+        let ctrlMessage = isHidden ? 'is hidden (row collapsed successfully)' : 'should be hidden but is still visible';
+        console.log(`[Test] ${ctrlIcon} Expanded row content ${ctrlMessage}.`);
     });
 });
 
@@ -268,7 +375,14 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
     test('Validate Filter Functionality - Req 3.9.004', async ({ contacts }) => {
         // Get initial row count
         const initialCount = await contacts.getGridRowCount();
-        expect(initialCount, 'Grid should have at least one contact row').toBeGreaterThan(0);
+        const countIsValid = initialCount > 0;
+        expect.soft(initialCount, 'Grid should have at least one contact row').toBeGreaterThan(0);
+        
+        let ctrlIcon = countIsValid ? '✅': '❌';
+        let ctrlMessage = countIsValid 
+            ? `found (${initialCount} rows)` 
+            : `no rows found (expected at least 1, found ${initialCount})`;
+        console.log(`[Test] ${ctrlIcon} Grid rows ${ctrlMessage}.`);
         
         // Apply filter
         await contacts.filterContacts('COLLEEN AALTO', true);
@@ -281,7 +395,7 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
         // Validate contact count is greater than 0
         const contactCount = await contacts.getContactCount();
         const countIsValid = contactCount > 0;
-        expect(contactCount, 'Contact count should be greater than 0').toBeGreaterThan(0);
+        expect.soft(contactCount, 'Contact count should be greater than 0').toBeGreaterThan(0);
         
         let ctrlIcon = countIsValid ? '✅': '❌';
         let ctrlMessage = countIsValid 
@@ -298,7 +412,7 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
         const contactCount = await contacts.getContactCount();
         const expectedCount = 2;
         const countMatches = contactCount === expectedCount;
-        expect(contactCount, 'Contact count should return 2 rows').toBe(expectedCount);
+        expect.soft(contactCount, 'Contact count should return 2 rows').toBe(expectedCount);
         
         let ctrlIcon = countMatches ? '✅': '❌';
         let ctrlMessage = countMatches 
@@ -310,7 +424,7 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
         const contactCountText = await contacts.getContactCountText();
         const expectedText = "2 found";
         const textMatches = contactCountText === expectedText;
-        expect(contactCountText, 'Contact count should display "2 found"').toBe(expectedText);
+        expect.soft(contactCountText, 'Contact count should display "2 found"').toBe(expectedText);
         
         ctrlIcon = textMatches ? '✅': '❌';
         ctrlMessage = textMatches 
@@ -339,7 +453,7 @@ test.describe('LV Contacts - Pagination Functionality', () => {
         
         // Validate page number changed
         const pageChanged = currentPageNumber !== initialPageNumber;
-        expect(currentPageNumber, `Page number should change after navigation. Current Page [${currentPageNumber}], Previous Page [${initialPageNumber}]`).not.toBe(initialPageNumber);
+        expect.soft(currentPageNumber, `Page number should change after navigation. Current Page [${currentPageNumber}], Previous Page [${initialPageNumber}]`).not.toBe(initialPageNumber);
         
         let ctrlIcon = pageChanged ? '✅': '❌';
         let ctrlMessage = pageChanged 

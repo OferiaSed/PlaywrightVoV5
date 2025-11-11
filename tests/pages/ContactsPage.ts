@@ -25,10 +25,6 @@ export class ContactsPage extends BasePage {
     // Grid and Table Locators
     //--------------------------------------------------------------------------------------------
 
-    private get contactsGrid(): Locator {
-        return this.page.locator('app-table');
-    }
-
     private get gridHeader(): Locator {
         return this.page.locator('app-table thead tr');
     }
@@ -109,50 +105,6 @@ export class ContactsPage extends BasePage {
 
     private get contactCount(): Locator {
         return this.page.locator('//app-table//div[contains(@class, "tw-font-bold tw-text")]');
-    }
-
-    //--------------------------------------------------------------------------------------------
-    // Pagination Locators
-    //--------------------------------------------------------------------------------------------
-
-    private get paginationSection(): Locator {
-        return this.page.locator('p-paginator');
-    }
-
-    private get firstPageButton(): Locator {
-        return this.paginationSection.getByRole('button', { name: 'First Page' });
-    }
-
-    private get nextPageButton(): Locator {
-        return this.paginationSection.getByRole('button', { name: 'Next Page' });
-    }
-
-    private get previousPageButton(): Locator {
-        return this.paginationSection.getByRole('button', { name: 'Previous Page' });
-    }
-
-    private get lastPageButton(): Locator {
-        return this.paginationSection.getByRole('button', { name: 'Last Page' });
-    }
-
-    private get pageNumbers(): Locator {
-        return this.paginationSection.locator('//button[contains(@class, "page")]');
-    }
-
-    private get currentPageSelected(): Locator {
-        return this.paginationSection.locator('button[aria-current="page"]');
-    }
-
-    public getPaginationSection(): Locator {
-        return this.paginationSection;
-    }
-
-    //--------------------------------------------------------------------------------------------
-    // Scroll to Top Locators
-    //--------------------------------------------------------------------------------------------
-
-    private get scrollToTopButton(): Locator {
-        return this.page.getByRole('button', { name: 'Scroll to top of page' });
     }
 
     //--------------------------------------------------------------------------------------------
@@ -476,83 +428,14 @@ export class ContactsPage extends BasePage {
         }
     }
 
-    @step('Validate Pagination Controls')
-    async validatePaginationControls() {
-        const isPaginationVisible = await this.isLocatorVisible(this.paginationSection);
-        
-        if (isPaginationVisible) {
-            await expect(this.paginationSection, 'Pagination section should be visible').toBeVisible();
-            let isCond = await this.isLocatorVisible(this.paginationSection);
-            let ctrlIcon = isCond ? '✅': '❌';
-            let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-            console.log(`[Contacts] ${ctrlIcon} Pagination section ${ctrlMessage}.`);
-            
-            // Check if pagination is needed (more than one page)
-            const pageNumbers = this.pageNumbers;
-            const pageCount = await pageNumbers.count();
-            
-            if (pageCount > 1) {
-                // Validate First page button
-                await expect.soft(this.firstPageButton, 'First page button should be visible').toBeVisible();
-                isCond = await this.isLocatorVisible(this.firstPageButton);
-                ctrlIcon = isCond ? '✅': '❌';
-                ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-                console.log(`[Contacts] ${ctrlIcon} First page button ${ctrlMessage}.`);
-                
-                // Validate Next page button
-                await expect.soft(this.nextPageButton, 'Next page button should be visible').toBeVisible();
-                isCond = await this.isLocatorVisible(this.nextPageButton);
-                ctrlIcon = isCond ? '✅': '❌';
-                ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-                console.log(`[Contacts] ${ctrlIcon} Next page button ${ctrlMessage}.`);
-                
-                // Validate Previous page button
-                await expect.soft(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
-                isCond = await this.isLocatorVisible(this.previousPageButton);
-                ctrlIcon = isCond ? '✅': '❌';
-                ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-                console.log(`[Contacts] ${ctrlIcon} Previous page button ${ctrlMessage}.`);
-                
-                // Validate Last page button
-                await expect.soft(this.lastPageButton, 'Last page button should be visible').toBeVisible();
-                isCond = await this.isLocatorVisible(this.lastPageButton);
-                ctrlIcon = isCond ? '✅': '❌';
-                ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-                console.log(`[Contacts] ${ctrlIcon} Last page button ${ctrlMessage}.`);
-                
-                ctrlIcon = '✅';
-                ctrlMessage = `is visible and functional (${pageCount} pages)`;
-                console.log(`[Contacts] ${ctrlIcon} Pagination controls ${ctrlMessage}.`);
-            } else {
-                ctrlIcon = '✅';
-                ctrlMessage = 'is visible (single page, navigation buttons not needed)';
-                console.log(`[Contacts] ${ctrlIcon} Pagination controls ${ctrlMessage}.`);
-            }
-        } else {
-            let ctrlIcon = '⚠️ ';
-            let ctrlMessage = 'is not visible (pagination not needed)';
-            console.log(`[Contacts] ${ctrlIcon} Pagination controls ${ctrlMessage}.`);
-        }
-    }
-
     @step('Validate Scroll to Top Link')
     async validateScrollToTopLink() {
-        // Select 10 rows per page
+        // ContactsPage-specific setup: Select 10 rows per page to ensure enough content to scroll
         await this.dropdownNavigationPanel("10");
         console.log(`[Contacts] Selected 10 rows per page.`);
 
-        // Scroll to bottom first
-        await this.scrollToBottom();
-        await this.delay(1000);
-        console.log(`[Contacts] Scrolled to bottom of page.`);
-        
-        const scrollToTopLink = this.scrollToTopButton;
-        await expect(scrollToTopLink, 'Scroll to top link should be visible at bottom of page').toBeVisible();
-        
-        let isCond = await this.isLocatorVisible(scrollToTopLink);
-        let ctrlIcon = isCond ? '✅': '❌';
-        let ctrlMessage = isCond ? 'is visible at bottom of page' : 'should be visible but was not found';
-        console.log(`[Contacts] ${ctrlIcon} Scroll to top link ${ctrlMessage}.`);
+        // Use base method for validation
+        await super.validateScrollToTopButton();
     }
 
     @step('Validate Standard Footer')
@@ -615,77 +498,10 @@ export class ContactsPage extends BasePage {
         await this.validateFilterFunctionality(filterValue, cleanFilter, validateFilter);
     }
 
-    @step('Navigate to Next Page')
-    async navigateToNextPage() {
-        await expect.soft(this.nextPageButton, 'Next page button should be visible').toBeVisible();
-        let isCond = await this.isLocatorVisible(this.nextPageButton);
-        let ctrlIcon = isCond ? '✅': '❌';
-        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-        console.log(`[Contacts] ${ctrlIcon} Next page button ${ctrlMessage}.`);
-        
-        await this.nextPageButton.click();
-        await this.delay(2000);
-        console.log(`[Contacts] ✅ Navigated to next page successfully.`);
-    }
-
-    @step('Navigate to Previous Page')
-    async navigateToPreviousPage() {
-        await expect.soft(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
-        
-        let isCond = await this.isLocatorVisible(this.previousPageButton);
-        let ctrlIcon = isCond ? '✅': '❌';
-        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-        console.log(`[Contacts] ${ctrlIcon} Previous page button ${ctrlMessage}.`);
-        
-        await this.previousPageButton.click();
-        await this.delay(2000);
-        console.log(`[Contacts] ✅ Navigated to previous page successfully.`);
-    }
-
-    @step('Navigate to Specific Page')
-    async navigateToSpecificPage(pageNumber: number) {
-        const pageButton = this.pageNumbers.nth(pageNumber - 1);
-        await expect.soft(pageButton, `Page ${pageNumber} button should be visible`).toBeVisible();
-        
-        let isCond = await this.isLocatorVisible(pageButton);
-        let ctrlIcon = isCond ? '✅': '❌';
-        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-        console.log(`[Contacts] ${ctrlIcon} Page ${pageNumber} button ${ctrlMessage}.`);
-        
-        await pageButton.click();
-        await this.delay(2000);
-        console.log(`[Contacts] ✅ Navigated to page ${pageNumber} successfully.`);
-    }
-
     @step('Click Scroll to Top Link')
     async clickScrollToTopLink() {
-        // Get scroll position before clicking
-        const scrollToTopLink = this.scrollToTopButton;
-        const scrollPositionBefore = await this.page.evaluate(() => window.scrollY);
-        console.log(`[Contacts] Scroll position before clicking: ${scrollPositionBefore}px.`);
-        
-        // Validate link visibility
-        await expect.soft(scrollToTopLink, 'Scroll to top link should be visible').toBeVisible();
-        let isCond = await this.isLocatorVisible(scrollToTopLink);
-        let ctrlIcon = isCond ? '✅': '❌';
-        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-        console.log(`[Contacts] ${ctrlIcon} Scroll to top link ${ctrlMessage}.`);
-        
-        // Click the link
-        await scrollToTopLink.click();
-        await this.delay(2000);
-        console.log(`[Contacts] Scroll to top link clicked successfully.`);
-        
-        // Validate page scrolled to top
-        const scrollPositionAfter = await this.page.evaluate(() => window.scrollY);
-        const scrolledToTop = scrollPositionAfter === 0;
-        expect.soft(scrollPositionAfter, 'Page should be scrolled to top').toBe(0);
-        
-        ctrlIcon = scrolledToTop ? '✅': '❌';
-        ctrlMessage = scrolledToTop 
-            ? `scrolled to top successfully (from ${scrollPositionBefore}px to ${scrollPositionAfter}px)` 
-            : `did not scroll to top, scroll position is ${scrollPositionAfter}px (expected 0px)`;
-        console.log(`[Contacts] ${ctrlIcon} Page scroll ${ctrlMessage}.`);
+        // Use base method for clicking scroll to top button
+        await super.clickScrollToTopButton();
     }
 
     //--------------------------------------------------------------------------------------------
@@ -720,21 +536,6 @@ export class ContactsPage extends BasePage {
     @step('Get Grid Row Count')
     async getGridRowCount(): Promise<number> {
         return await this.gridRows.count();
-    }
-
-    @step('Get Current Page Number')
-    async getCurrentPageNumber(): Promise<string> {
-        await expect.soft(this.currentPageSelected, 'Current page should be visible').toBeVisible();
-        
-        let isCond = await this.isLocatorVisible(this.currentPageSelected);
-        let ctrlIcon = isCond ? '✅': '❌';
-        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
-        console.log(`[Contacts] ${ctrlIcon} Current page indicator ${ctrlMessage}.`);
-        
-        const countText = await this.currentPageSelected.textContent();
-        const pageNumber = countText?.trim() || '';
-        
-        return pageNumber;
     }
 
     //--------------------------------------------------------------------------------------------

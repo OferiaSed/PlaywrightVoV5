@@ -1,5 +1,4 @@
 import { test, expect } from '../fixtures/BaseTest';
-import { ExcelReader } from '../../utils/helpers/excel-reader';
 
 /**
  * HR Data Accruals Test Suite
@@ -19,22 +18,23 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
  * - Security and accessibility compliance
  */
 
+test.beforeEach(async ({ view }) => {
+    await view.goToDashboardPage();
+    await view.goToClaimSearchTab();
+});
+
 test.describe('HR Data Accruals - Page Structure and Navigation', () => {
     
-    test.beforeEach(async ({ login, view }) => {
-        // Navigate to a disability claim for testing
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(13);
-    });
-
-    test('Validate HR Data Tab Navigation', async ({ hrDataAccruals }) => {
+    test('Validate HR Data Tab Navigation', async ({ hrDataAccruals, view }) => {
         // Validate HR Data tab is active
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.validateAccrualsMenuVisibility();
     });
 
-    test('Validate Accruals Elements and Table', async ({ hrDataAccruals }) => {        
+    test('Validate Accruals Elements and Table', async ({ hrDataAccruals, view }) => {        
         // Validate Accruals page loads correctly
+        await view.SearchClaimByCriteria(6);
         await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.validateAccrualsPageHeader();
         await hrDataAccruals.validateDateRangeFilterElements();
@@ -42,8 +42,9 @@ test.describe('HR Data Accruals - Page Structure and Navigation', () => {
         await hrDataAccruals.validateScrollToTopButton();
     });
 
-    test('Validate Sentence Case Formatting', async ({ view, hrDataAccruals }) => {
+    test('Validate Sentence Case Formatting', async ({ hrDataAccruals, view }) => {
         // Validate field labels are in sentence case
+        await view.SearchClaimByCriteria(6);
         await hrDataAccruals.goToHRDataAccrualsTab();
         const expectedColumns = ['ACCRUAL TYPE', 'EFFECTIVE DATE', 'UNIT', 'VALUE', 'FREQUENCY', 'AMOUNT'];
         
@@ -56,20 +57,17 @@ test.describe('HR Data Accruals - Page Structure and Navigation', () => {
 
 test.describe('HR Data Accruals - Date Range Filtering', () => {
 
-    test.beforeEach(async ({ login, view, hrDataAccruals }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(13);
-        await hrDataAccruals.goToHRDataAccrualsTab();
-    });
-
-    test('Validate Date Range Filter Elements', async ({ hrDataAccruals }) => {
+    test('Validate Date Range Filter Elements', async ({ hrDataAccruals, view }) => {
         // Validate all date filter elements are present and functional
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.validateDateRangeFilterElements();
     });
 
-    test('Test From Date Calendar Functionality', async ({ hrDataAccruals }) => {
+    test('Test From Date Calendar Functionality', async ({ hrDataAccruals, view }) => {
         // Test From date calendar opens and allows date selection
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         const fromValue = '09/11/2025';
         await hrDataAccruals.setFromDate(fromValue);
         
@@ -78,8 +76,10 @@ test.describe('HR Data Accruals - Date Range Filtering', () => {
         expect(fromDateValue, 'From date should be set').toContain(fromValue);
     });
 
-    test('Test To Date Calendar Functionality', async ({ hrDataAccruals }) => {
+    test('Test To Date Calendar Functionality', async ({ hrDataAccruals, view }) => {
         // Test To date calendar opens and allows date selection
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         const toValue = '09/15/2025';
         await hrDataAccruals.setToDate(toValue);
         
@@ -88,8 +88,10 @@ test.describe('HR Data Accruals - Date Range Filtering', () => {
         expect(toDateValue, 'To date should be set').toContain(toValue);
     });
 
-    test('Test Date Range Selection and Search', async ({ hrDataAccruals }) => {
+    test('Test Date Range Selection and Search', async ({ hrDataAccruals, view }) => {
         // Test complete date range selection and search functionality
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('09/11/2025', '09/15/2025');
         await hrDataAccruals.clickSearchButton();
         
@@ -97,8 +99,10 @@ test.describe('HR Data Accruals - Date Range Filtering', () => {
         await hrDataAccruals.validateDateRangeFilter('9/11/2025', 3);
     });
 
-    test('Test Calendar Navigation Controls', async ({ hrDataAccruals }) => {
+    test('Test Calendar Navigation Controls', async ({ hrDataAccruals, view }) => {
         // Test calendar navigation (previous/next month, month/year selection)
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.getFromDateCalendar().click();
         await hrDataAccruals.waitForCalendarToOpen();
         
@@ -112,18 +116,24 @@ test.describe('HR Data Accruals - Date Range Filtering', () => {
         await hrDataAccruals.clickMonthYearButton();
     });
 
-    test('Test Date Range Filtering Results', async ({ hrDataAccruals }) => {
+    test('Test Date Range Filtering Results', async ({ hrDataAccruals, view }) => {
         // Test that filtered results match the selected date range
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.testDateRangeFiltering('06/01/2024', '12/31/2024');
     });
 
-    test('Test Edge Cases - Same From and To Date', async ({ hrDataAccruals }) => {
+    test('Test Edge Cases - Same From and To Date', async ({ hrDataAccruals, view }) => {
         // Test filtering with same from and to date
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.testDateRangeFiltering('01/15/2024', '01/15/2024');
     });
 
-    test('Test Edge Cases - Invalid Date Range', async ({ hrDataAccruals }) => {
+    test('Test Edge Cases - Invalid Date Range', async ({ hrDataAccruals, view }) => {
         // Test filtering with invalid date range (to date before from date)
+        await view.SearchClaimByCriteria(6);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('12/31/2024', '01/01/2024');
         await hrDataAccruals.clickSearchButton();
         
@@ -134,20 +144,17 @@ test.describe('HR Data Accruals - Date Range Filtering', () => {
 
 test.describe('HR Data Accruals - Table Structure and Data Validation', () => {
 
-    test.beforeEach(async ({ login, view, hrDataAccruals }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-        await hrDataAccruals.goToHRDataAccrualsTab();
-    });
-
-    test('Validate Table Column Headers', async ({ hrDataAccruals }) => {
+    test('Validate Table Column Headers', async ({ hrDataAccruals, view }) => {
         // Validate all required columns are present
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.validateAccrualsTableStructure();
     });
 
-    test('Validate Accrual Type Values', async ({ hrDataAccruals }) => {
+    test('Validate Accrual Type Values', async ({ hrDataAccruals, view }) => {
         // Set date range and search
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('01/01/2024', '12/31/2024');
         await hrDataAccruals.clickSearchButton();
         
@@ -155,7 +162,9 @@ test.describe('HR Data Accruals - Table Structure and Data Validation', () => {
         await hrDataAccruals.validateAccrualTypeValues();
     });
 
-    test('Validate Effective Date Format', async ({ hrDataAccruals }) => {
+    test('Validate Effective Date Format', async ({ hrDataAccruals, view }) => {
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('01/01/2024', '12/31/2024');
         await hrDataAccruals.clickSearchButton();
         
@@ -166,7 +175,9 @@ test.describe('HR Data Accruals - Table Structure and Data Validation', () => {
         }
     });
 
-    test('Validate Unit Format (hours:days:months)', async ({ hrDataAccruals }) => {
+    test('Validate Unit Format (hours:days:months)', async ({ hrDataAccruals, view }) => {
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('01/01/2024', '12/31/2024');
         await hrDataAccruals.clickSearchButton();
         
@@ -181,7 +192,9 @@ test.describe('HR Data Accruals - Table Structure and Data Validation', () => {
         }
     });
 
-    test('Validate Frequency Values', async ({ hrDataAccruals }) => {
+    test('Validate Frequency Values', async ({ hrDataAccruals, view }) => {
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('01/01/2024', '12/31/2024');
         await hrDataAccruals.clickSearchButton();
         
@@ -189,7 +202,9 @@ test.describe('HR Data Accruals - Table Structure and Data Validation', () => {
         await hrDataAccruals.validateFrequencyValues();
     });
 
-    test('Validate Amount Format', async ({ hrDataAccruals }) => {
+    test('Validate Amount Format', async ({ hrDataAccruals, view }) => {
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('01/01/2024', '12/31/2024');
         await hrDataAccruals.clickSearchButton();
         
@@ -204,7 +219,9 @@ test.describe('HR Data Accruals - Table Structure and Data Validation', () => {
         }
     });
 
-    test('Validate Data Integrity', async ({ hrDataAccruals }) => {
+    test('Validate Data Integrity', async ({ hrDataAccruals, view }) => {
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('01/01/2024', '12/31/2024');
         await hrDataAccruals.clickSearchButton();
         
@@ -215,20 +232,17 @@ test.describe('HR Data Accruals - Table Structure and Data Validation', () => {
 
 test.describe('HR Data Accruals - Scroll to Top Functionality', () => {
 
-    test.beforeEach(async ({ login, view, hrDataAccruals }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-        await hrDataAccruals.goToHRDataAccrualsTab();
-    });
-
-    test('Validate Scroll to Top Button Visibility', async ({ hrDataAccruals }) => {
+    test('Validate Scroll to Top Button Visibility', async ({ hrDataAccruals, view }) => {
         // Validate scroll to top button is visible at bottom of page
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.validateScrollToTopButton();
     });
 
-    test('Test Scroll to Top Functionality', async ({ hrDataAccruals }) => {
+    test('Test Scroll to Top Functionality', async ({ hrDataAccruals, view }) => {
         // Test scroll to top button functionality
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('01/01/2024', '12/31/2024');
         await hrDataAccruals.clickSearchButton();
         
@@ -239,23 +253,20 @@ test.describe('HR Data Accruals - Scroll to Top Functionality', () => {
 
 test.describe('HR Data Accruals - Error Handling and Edge Cases', () => {
 
-    test.beforeEach(async ({ login, view, hrDataAccruals }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-        await hrDataAccruals.goToHRDataAccrualsTab();
-    });
-
-    test('Test Empty Date Range Search', async ({ hrDataAccruals }) => {
+    test('Test Empty Date Range Search', async ({ hrDataAccruals, view }) => {
         // Test search with empty date range
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.clickSearchButton();
         
         // Should handle empty date range gracefully
         await hrDataAccruals.validateAccrualsTableStructure();
     });
 
-    test('Test Invalid Date Format', async ({ hrDataAccruals }) => {
+    test('Test Invalid Date Format', async ({ hrDataAccruals, view }) => {
         // Test with invalid date format
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         try {
             await hrDataAccruals.setFromDate('invalid-date');
             await hrDataAccruals.setToDate('another-invalid-date');
@@ -266,8 +277,10 @@ test.describe('HR Data Accruals - Error Handling and Edge Cases', () => {
         }
     });
 
-    test('Test Future Date Range', async ({ hrDataAccruals }) => {
+    test('Test Future Date Range', async ({ hrDataAccruals, view }) => {
         // Test with future date range
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         const futureDate = new Date();
         futureDate.setFullYear(futureDate.getFullYear() + 1);
         const futureDateStr = futureDate.toLocaleDateString('en-US');
@@ -279,8 +292,10 @@ test.describe('HR Data Accruals - Error Handling and Edge Cases', () => {
         await hrDataAccruals.validateAccrualsTableStructure();
     });
 
-    test('Test Very Large Date Range', async ({ hrDataAccruals }) => {
+    test('Test Very Large Date Range', async ({ hrDataAccruals, view }) => {
         // Test with very large date range (multiple years)
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setDateRange('01/01/2020', '12/31/2025');
         await hrDataAccruals.clickSearchButton();
         
@@ -288,8 +303,10 @@ test.describe('HR Data Accruals - Error Handling and Edge Cases', () => {
         await hrDataAccruals.validateAccrualsTableStructure();
     });
 
-    test('Test Rapid Date Changes', async ({ hrDataAccruals }) => {
+    test('Test Rapid Date Changes', async ({ hrDataAccruals, view }) => {
         // Test rapid changes to date fields
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.setFromDate('01/01/2024');
         await hrDataAccruals.setToDate('01/31/2024');
         await hrDataAccruals.setFromDate('02/01/2024');
@@ -303,15 +320,10 @@ test.describe('HR Data Accruals - Error Handling and Edge Cases', () => {
 
 test.describe('HR Data Accruals - Security and Accessibility', () => {
 
-    test.beforeEach(async ({ login, view, hrDataAccruals }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(1);
-        await hrDataAccruals.goToHRDataAccrualsTab();
-    });
-
-    test('Validate Input Sanitization', async ({ hrDataAccruals }) => {
+    test('Validate Input Sanitization', async ({ hrDataAccruals, view }) => {
         // Test input sanitization for date fields
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         const maliciousInputs = [
             '<script>alert("xss")</script>',
             '1; DROP TABLE accruals;',
@@ -333,8 +345,10 @@ test.describe('HR Data Accruals - Security and Accessibility', () => {
         }
     });
 
-    test('Validate User Security Permissions', async ({ login, view, hrDataAccruals }) => {
+    test('Validate User Security Permissions', async ({ view, hrDataAccruals }) => {
         // Test that user security is maintained (as per requirement 3.1.004)
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.goToHRDataAccrualsTab();
         
         // Validate user can access HR Data based on their security level
@@ -344,8 +358,10 @@ test.describe('HR Data Accruals - Security and Accessibility', () => {
         // This test validates basic access control
     });
 
-    test('Validate WCAG Compliance', async ({ hrDataAccruals }) => {
+    test('Validate WCAG Compliance', async ({ hrDataAccruals, view }) => {
         // Basic accessibility validation
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.validateCompleteAccrualsPage();
         
         // Validate proper ARIA labels and roles
@@ -356,8 +372,10 @@ test.describe('HR Data Accruals - Security and Accessibility', () => {
         await expect(table, 'Table should have proper role').toHaveAttribute('role', 'table');
     });
 
-    test('Validate Keyboard Navigation', async ({ hrDataAccruals }) => {
+    test('Validate Keyboard Navigation', async ({ hrDataAccruals, view }) => {
         // Test keyboard navigation through form elements
+        await view.SearchClaimByCriteria(7);
+        await hrDataAccruals.goToHRDataAccrualsTab();
         await hrDataAccruals.testKeyboardNavigation();
     });
 });

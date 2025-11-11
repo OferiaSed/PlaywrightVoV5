@@ -16,17 +16,17 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
  * - Data-driven testing scenarios
  */
 
+test.beforeEach(async ({ view }) => {
+    await view.goToDashboardPage();
+    await view.goToClaimSearchTab();
+});
+
+
 test.describe('LV Certifications - Page Structure and Header', () => {
     
-    test.beforeEach(async ({ login, view }) => {
-        // Navigate to a disability claim for testing
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(6);
-    });
-
-    test('Validate Certifications Page Header and Structure - Req 3.7.001', async ({ certifications }) => {
+    test('Validate Certifications Page Header and Structure - Req 3.7.001', async ({ certifications, view }) => {
         // Navigate to Certifications tab
+        await view.SearchClaimByCriteria(8);
         await certifications.navigateToCertificationsTab();
         
         // Validate page header
@@ -39,7 +39,8 @@ test.describe('LV Certifications - Page Structure and Header', () => {
         await certifications.validateCertificationCountDisplay();
     });
 
-    test('Validate Grid Columns and Data Format - Req 3.7.001', async ({ certifications }) => {
+    test('Validate Grid Columns and Data Format - Req 3.7.001', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(8);
         await certifications.navigateToCertificationsTab();
         
         // Validate grid structure
@@ -53,7 +54,8 @@ test.describe('LV Certifications - Page Structure and Header', () => {
         expect(rowCount, 'Should have at least one certification row').toBeGreaterThan(0);
     });
 
-    test('Validate Certification Count Display Format - Req 3.7.005', async ({ certifications }) => {
+    test('Validate Certification Count Display Format - Req 3.7.005', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(8);
         await certifications.navigateToCertificationsTab();
         
         // Validate certification count format
@@ -66,14 +68,9 @@ test.describe('LV Certifications - Page Structure and Header', () => {
 });
 
 test.describe('LV Certifications - Row Expansion Functionality', () => {
-    
-    test.beforeEach(async ({ login, view }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-    });
 
     test('Validate Row Expansion with Certification Section - Req 3.7.002', async ({ certifications, view }) => {
-        await view.SearchClaimByCriteria(6);
+        await view.SearchClaimByCriteria(8);
         await certifications.navigateToCertificationsTab();
         
         // Expand first row
@@ -87,7 +84,7 @@ test.describe('LV Certifications - Row Expansion Functionality', () => {
     });
 
     test('Validate Clarification Section Visibility Logic - Req 3.7.003', async ({ certifications, view }) => {
-        await view.SearchClaimByCriteria(6);
+        await view.SearchClaimByCriteria(8);
         await certifications.navigateToCertificationsTab();
         
         // Expand first row
@@ -98,7 +95,7 @@ test.describe('LV Certifications - Row Expansion Functionality', () => {
     });
 
     test('Validate Intermittent Absence Frequency Section - Req 3.7.004', async ({ certifications, view }) => {
-        await view.SearchClaimByCriteria(7);
+        await view.SearchClaimByCriteria(9);
         await certifications.navigateToCertificationsTab();
         
         // Expand first row
@@ -109,7 +106,7 @@ test.describe('LV Certifications - Row Expansion Functionality', () => {
     });
 
     test('Validate Complete Expanded Row Data - Req 3.7.002-3.7.004', async ({ certifications, view }) => {
-        await view.SearchClaimByCriteria(7);
+        await view.SearchClaimByCriteria(9);
         await certifications.navigateToCertificationsTab();
         
         // Validate complete expanded row data
@@ -119,7 +116,7 @@ test.describe('LV Certifications - Row Expansion Functionality', () => {
     });
 
     test('Validate Row Collapse Functionality', async ({ certifications, view, page }) => {
-        await view.SearchClaimByCriteria(7);
+        await view.SearchClaimByCriteria(9);
         await certifications.navigateToCertificationsTab();
         
         // Expand first row
@@ -135,14 +132,9 @@ test.describe('LV Certifications - Row Expansion Functionality', () => {
 });
 
 test.describe('LV Certifications - Filter and Search Functionality', () => {
-    
-    test.beforeEach(async ({ login, view }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(7);
-    });
 
-    test('Validate Filter Functionality - Req 3.7.005', async ({ certifications }) => {
+    test('Validate Filter Functionality - Req 3.7.005', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(9);
         await certifications.navigateToCertificationsTab();
         
         // Test filtering by different criteria
@@ -157,7 +149,8 @@ test.describe('LV Certifications - Filter and Search Functionality', () => {
         }
     });
 
-    test('Validate Filter Results Display', async ({ certifications }) => {
+    test('Validate Filter Results Display', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(9);
         await certifications.navigateToCertificationsTab();
         
         // Get initial count
@@ -171,7 +164,8 @@ test.describe('LV Certifications - Filter and Search Functionality', () => {
         expect(filteredCount, 'Filtered count should be less than or equal to initial count').toBeLessThanOrEqual(initialCount);
     });
 
-    test('Validate Clear Filter Functionality', async ({ certifications, page }) => {
+    test('Validate Clear Filter Functionality', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(9);
         await certifications.navigateToCertificationsTab();
         
         // Get initial count
@@ -187,21 +181,17 @@ test.describe('LV Certifications - Filter and Search Functionality', () => {
 });
 
 test.describe('LV Certifications - Pagination Functionality', () => {
-    
-    test.beforeEach(async ({ login, view }) => {
-        await login.performLoginDataDriven(1);
-        await view.goToClaimSearchTab();
-        await view.SearchClaimByCriteria(8);
-    });
 
-    test('Validate Pagination Controls Display - Req 3.7.006', async ({ certifications }) => {
+    test('Validate Pagination Controls Display - Req 3.7.006', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(10);
         await certifications.navigateToCertificationsTab();
         
         // Validate pagination controls
         await certifications.validatePaginationControls();
     });
 
-    test('Validate Next Page Navigation', async ({ certifications, page }) => {
+    test('Validate Next Page Navigation', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(10);
         await certifications.navigateToCertificationsTab();
         
         // Check if pagination is available
@@ -217,7 +207,8 @@ test.describe('LV Certifications - Pagination Functionality', () => {
         }
     });
 
-    test('Validate Previous Page Navigation', async ({ certifications, page }) => {
+    test('Validate Previous Page Navigation', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(10);
         await certifications.navigateToCertificationsTab();
         
         // Check if pagination is available
@@ -235,7 +226,8 @@ test.describe('LV Certifications - Pagination Functionality', () => {
         }
     });
 
-    test('Validate Specific Page Navigation', async ({ certifications, page }) => {
+    test('Validate Specific Page Navigation', async ({ certifications, view }) => {
+        await view.SearchClaimByCriteria(10);
         await certifications.navigateToCertificationsTab();
         
         // Check if pagination is available

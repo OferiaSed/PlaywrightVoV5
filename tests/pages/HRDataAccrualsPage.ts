@@ -56,10 +56,6 @@ export class HRDataAccrualsPage extends BasePage {
         return this.page.getByRole('button', { name: 'Search' });
     }
 
-    private get scrollToTopButton(): Locator {
-        return this.page.getByRole('button', { name: 'Scroll to top of page' });
-    }
-
     //--------------------------------------------------------------------------------------------
     // Table and Grid Locators
     //--------------------------------------------------------------------------------------------
@@ -110,7 +106,7 @@ export class HRDataAccrualsPage extends BasePage {
     //--------------------------------------------------------------------------------------------
 
     private get calendarPopup(): Locator {
-        return this.page.locator('//p-calendar//div[@class="p-datepicker"]');
+        return this.page.getByRole('dialog', { name: 'Choose Date' });
     }
 
     private get calendarHeader(): Locator {
@@ -233,11 +229,6 @@ export class HRDataAccrualsPage extends BasePage {
         }
     }
 
-    @step('Validate Scroll to Top Button')
-    async validateScrollToTopButton() {
-        await this.scrollToBottom();
-        await expect(this.scrollToTopButton, 'Scroll to top button should be visible').toBeVisible();
-    }
 
     @step('Validate Date Range Filter')
     async validateDateRangeFilter(criteria: string, expectedResult: number) {
@@ -256,8 +247,6 @@ export class HRDataAccrualsPage extends BasePage {
         await this.fromDateCalendar.click();
         await this.fromDateCalendar.clear();
         await this.fromDateCalendar.type(date);
-        //await this.waitForCalendarToOpen();
-        //await this.selectCalendarDate(date);
     }
 
     @step('Set To Date')
@@ -265,8 +254,6 @@ export class HRDataAccrualsPage extends BasePage {
         await this.toDateCalendar.click();
         await this.toDateCalendar.clear();
         await this.toDateCalendar.type(date);
-        //await this.waitForCalendarToOpen();
-        //await this.selectCalendarDate(date);
     }
 
     @step('Set Date Range')
@@ -280,12 +267,6 @@ export class HRDataAccrualsPage extends BasePage {
         await expect(this.searchButton, 'Search button should be visible').toBeVisible();
         await this.searchButton.click();
         await this.waitForPageLoad();
-    }
-
-    @step('Click Scroll to Top Button')
-    async clickScrollToTopButton() {
-        await expect(this.scrollToTopButton, 'Scroll to top button should be visible').toBeVisible();
-        await this.scrollToTopButton.click();
     }
 
     @step('Wait for Calendar to Open')
@@ -349,46 +330,7 @@ export class HRDataAccrualsPage extends BasePage {
         }
     }
 
-    @step('Validate Accruals Data with Excel Data')
-    async validateAccrualsDataWithExcelData(dataset: number) {
-        const reader = new ExcelReader(`${this.driverPath}${this.driverFile}`);
-        reader.selectDataSet('HR_Accruals_TestData', dataset);
-        
-        for (let row = 0; row < reader.count(); row++) {
-            reader.useRow(row);
-            
-            const expectedAccrualType = reader.getValue('AccrualType', '');
-            const expectedEffectiveDate = reader.getValue('EffectiveDate', '');
-            const expectedUnit = reader.getValue('Unit', '');
-            const expectedValue = reader.getValue('Value', '');
-            const expectedFrequency = reader.getValue('Frequency', '');
-            const expectedAmount = reader.getValue('Amount', '');
-            
-            // Find matching row in table
-            const rowCount = await this.tableRows.count();
-            let found = false;
-            
-            for (let i = 0; i < rowCount; i++) {
-                const actualAccrualType = await this.getAccrualTypeColumn(i).textContent();
-                const actualEffectiveDate = await this.getEffectiveDateColumn(i).textContent();
-                
-                if (actualAccrualType?.trim() === expectedAccrualType && 
-                    actualEffectiveDate?.trim() === expectedEffectiveDate) {
-                    
-                    // Validate all fields for this row
-                    await this.validateRowData(i, expectedAccrualType, expectedEffectiveDate, 
-                                            expectedUnit, expectedValue, expectedFrequency, expectedAmount);
-                    found = true;
-                    break;
-                }
-            }
-            
-            if (!found && expectedAccrualType) {
-                throw new Error(`Expected accrual data not found: ${expectedAccrualType} - ${expectedEffectiveDate}`);
-            }
-        }
-    }
-
+   
     @step('Validate Row Data')
     async validateRowData(rowIndex: number, expectedAccrualType: string, expectedEffectiveDate: string,
                          expectedUnit: string, expectedValue: string, expectedFrequency: string, expectedAmount: string) {
@@ -558,14 +500,6 @@ export class HRDataAccrualsPage extends BasePage {
         return this.page.locator('//app-table//thead//tr');
     }
 
-    async scrollToBottom(): Promise<void> {
-        await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    }
-
-    async getScrollPosition(): Promise<number> {
-        return await this.page.evaluate(() => window.pageYOffset);
-    }
-
     async pressTabKey(): Promise<void> {
         await this.page.keyboard.press('Tab');
     }
@@ -582,12 +516,8 @@ export class HRDataAccrualsPage extends BasePage {
         await this.scrollToBottom();
         await this.delay(1000);
         
-        // Click scroll to top button
-        await this.clickScrollToTopButton();
-        
-        // Validate page scrolled to top
-        const scrollPosition = await this.getScrollPosition();
-        expect(scrollPosition, 'Page should be scrolled to top').toBe(0);
+        // Use base method which includes click and validation
+        await super.clickScrollToTopButton();
     }
 
     @step('Test Keyboard Navigation')
