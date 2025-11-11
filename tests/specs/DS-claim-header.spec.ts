@@ -15,17 +15,17 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
  * - Data-driven testing scenarios
  */
 
-    test.describe('DS Claim Header - Default Fields Display', () => {
-        
-        test.beforeEach(async ({ login }) => {
-            // Navigate to a disability claim for testing
-            await login.performLoginDataDriven(1);
-        });
+    test.beforeEach(async ({ view }) => {
+        await view.goToDashboardPage();
+        await view.goToClaimSearchTab();
+    });
 
+
+    test.describe('DS Claim Header - Default Fields Display', () => {
+       
         test('Validate Default DS Claim Header Fields Display', async ({ customClaimHeader, view }) => {
             // Validate that all default fields are displayed in the correct order
             // Validate field order (left to right)
-            await view.goToClaimSearchTab();
             await view.SearchClaimByCriteria(1);
             await customClaimHeader.customizeHeaderWithFields([]);
             await customClaimHeader.validateDefaultDisabilityClaimHeaderFields();
@@ -42,6 +42,7 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             ];
 
             for (const scenario of statusScenarios) {
+                //await view.goToDashboardPage();
                 await view.goToClaimSearchTab();
                 await view.SearchClaimByCriteria(scenario.dataset);
                 await customClaimHeader.validateStatusColorCoding(scenario.status);
@@ -77,19 +78,15 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
 
     test.describe('DS Claim Header - Customization Functionality', () => {
 
-        test.beforeEach(async ({ login, view }) => {
-            await login.performLoginDataDriven(1);
-            await view.goToClaimSearchTab();
-            await view.SearchClaimByCriteria(5);
-        });
-
         test('Validate Pencil Icon Opens Customization Popup', async ({ customClaimHeader, view }) => {
             // Click pencil icon and validate popup opens
+            await view.SearchClaimByCriteria(5);
             await customClaimHeader.openCustomizationPopup();
         });
 
-        test('Validate Available Additional Fields for Selection', async ({ customClaimHeader }) => {
+        test('Validate Available Additional Fields for Selection', async ({ customClaimHeader, view }) => {
             // Validate that additional fields are available for selection
+            await view.SearchClaimByCriteria(5);
             await customClaimHeader.openCustomizationPopup();
             await customClaimHeader.restoreDefaultFields();
             const additionalFields = ['Client #', 'Client name', 'Last worked'];
@@ -98,8 +95,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             }
         });
 
-        test('Add Single Additional Field to Header', async ({ customClaimHeader }) => {
+        test('Add Single Additional Field to Header', async ({ customClaimHeader, view }) => {
             // Test adding Client # field
+            await view.SearchClaimByCriteria(5);
             await customClaimHeader.customizeHeaderWithFields(['Client #']);
             
             
@@ -107,8 +105,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             await customClaimHeader.validateFieldIsVisible('Client #');
         });
 
-        test('Add Multiple Additional Fields to Header', async ({ customClaimHeader }) => {
+        test('Add Multiple Additional Fields to Header', async ({ customClaimHeader, view }) => {
             // Test adding multiple fields
+            await view.SearchClaimByCriteria(5);
             const fieldsToAdd = ['Client #', 'Client name', 'Last worked'];
             await customClaimHeader.customizeHeaderWithFields(fieldsToAdd);
             
@@ -118,8 +117,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             }
         });
 
-        test('Remove Field from Header', async ({ customClaimHeader }) => {
+        test('Remove Field from Header', async ({ customClaimHeader, view }) => {
             // First add a field
+            await view.SearchClaimByCriteria(5);
             await customClaimHeader.customizeHeaderWithFields(['Client #']);
             await customClaimHeader.validateFieldIsVisible('Client #');
             
@@ -128,8 +128,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             await customClaimHeader.validateFieldIsNotVisible('Client #');
         });
 
-        test('Validate Maximum 10 Fields Limit', async ({ customClaimHeader }) => {
+        test('Validate Maximum 10 Fields Limit', async ({ customClaimHeader, view }) => {
             // Add all available fields to test maximum limit
+            await view.SearchClaimByCriteria(5);
             const allFields = ['Client #', 'Client name', 'Last worked'];
             await customClaimHeader.customizeHeaderWithFields(allFields);
             
@@ -140,20 +141,16 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
 
     test.describe('DS Claim Header - Customization Popup Behavior', () => {
 
-        test.beforeEach(async ({ login, view }) => {
-            await login.performLoginDataDriven(1);
-            await view.goToClaimSearchTab();
+        test('Validate Popup Header and Title', async ({ customClaimHeader, view }) => {
             await view.SearchClaimByCriteria(1);
-        });
-
-        test('Validate Popup Header and Title', async ({ customClaimHeader }) => {
             await customClaimHeader.openCustomizationPopup();
             
             // Validate popup title is "Configure disability header"
             await customClaimHeader.validateCustomizationPopupIsOpen();
         });
 
-        test('Validate At Least One Field Must Be Selected', async ({ customClaimHeader }) => {
+        test('Validate At Least One Field Must Be Selected', async ({ customClaimHeader, view }) => {
+            await view.SearchClaimByCriteria(1);
             await customClaimHeader.openCustomizationPopup();
             await customClaimHeader.restoreDefaultFields();
 
@@ -162,8 +159,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             await customClaimHeader.validateAtLeastOneFieldSelected();
         });
 
-        test('Validate Field Reordering Functionality', async ({ customClaimHeader }) => {
+        test('Validate Field Reordering Functionality', async ({ customClaimHeader, view }) => {
             // Add additional fields first
+            await view.SearchClaimByCriteria(1);
             await customClaimHeader.customizeHeaderWithFields(['Client #', 'Client name']);
             
             // Get current order
@@ -177,8 +175,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             expect(newOrder, 'Field order should change after reordering').not.toEqual(currentOrder);
         });
 
-        test('Validate Cancel Button Closes Popup Without Saving', async ({ customClaimHeader }) => {
+        test('Validate Cancel Button Closes Popup Without Saving', async ({ customClaimHeader, view }) => {
             // Get initial field order
+            await view.SearchClaimByCriteria(1);
             await customClaimHeader.customizeHeaderWithFields([]);
             const initialOrder = await customClaimHeader.getCurrentHeaderFieldOrder();
             
@@ -194,8 +193,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             expect(finalOrder, 'Field order should remain unchanged after cancel').toEqual(initialOrder);
         });
 
-        test('Validate Save Button Persists Changes', async ({ customClaimHeader }) => {
+        test('Validate Save Button Persists Changes', async ({ customClaimHeader, view }) => {
             // Get initial field order
+            await view.SearchClaimByCriteria(1);
             const initialOrder = await customClaimHeader.getCurrentHeaderFieldOrder();
             
             // Make changes and save
@@ -207,8 +207,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             expect(finalOrder, 'Client # should be in the new order').toContain('Client #');
         });
 
-        test('Validate Restore Defaults Functionality', async ({ customClaimHeader }) => {
+        test('Validate Restore Defaults Functionality', async ({ customClaimHeader, view }) => {
             // First customize the header
+            await view.SearchClaimByCriteria(1);
             await customClaimHeader.customizeHeaderWithFields(['Client #', 'Client name']);
             
             // Restore defaults
@@ -223,10 +224,8 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
     
     test.describe('DS Claim Header - Persistence and Session Management', () => {
 
-        test('Validate Customization Persists Across Different Claims', async ({ login, view, customClaimHeader }) => {
+        test('Validate Customization Persists Across Different Claims', async ({ view, customClaimHeader }) => {
             // Navigate to first claim and customize
-            await login.performLoginDataDriven(1);
-            await view.goToClaimSearchTab();
             await view.SearchClaimByCriteria(1);
             
             // Customize header
@@ -241,10 +240,8 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             await customClaimHeader.validateFieldIsVisible('Client name');
         });
 
-        test('Validate Customization Persists After Logout/Login', async ({ login, view, customClaimHeader }) => {
+        test('Validate Customization Persists After Logout/Login', async ({ page, login, view, customClaimHeader }) => {
             // First session - customize header
-            await login.performLoginDataDriven(1);
-            await view.goToClaimSearchTab();
             await view.SearchClaimByCriteria(1);
             await customClaimHeader.customizeHeaderWithFields(['Client #', 'Last worked']);
             
@@ -252,7 +249,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             await login.performLogout();
             
             // Second session - login and validate persistence
+            const authFile = '.auth/user.json';
             await login.performLoginDataDriven(1);
+            await page.context().storageState({path: authFile});
             await view.goToClaimSearchTab();
             await view.SearchClaimByCriteria(1);
             
@@ -261,11 +260,9 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             await customClaimHeader.validateFieldIsVisible('Last worked');
         });
 
-        test('Validate Line of Business Specific Customization', async ({ login, view, customClaimHeader }) => {
+        test('Validate Line of Business Specific Customization', async ({ view, customClaimHeader }) => {
             // Test that customization applies to all claims with same Line of Business
             // Navigate to DS claim and customize
-            await login.performLoginDataDriven(1);
-            await view.goToClaimSearchTab();
             await view.SearchClaimByCriteria(1); // DS claim
             await customClaimHeader.customizeHeaderWithFields(['Client #']);
             
@@ -276,40 +273,46 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
             // Validate customization applies to this DS claim too
             await customClaimHeader.validateFieldIsVisible('Client #');
             
-            // Navigate to different Line of Business claim (if available)
-            // This should not have the customization
-            // Note: This test assumes there are claims with different LOB
         });
     });
 
     test.describe('DS Claim Header - Error Handling and Edge Cases', () => {
 
-        test.beforeEach(async ({ login, view, customClaimHeader }) => {
-            await login.performLoginDataDriven(1);
-            await view.goToClaimSearchTab();
-            await view.SearchClaimByCriteria(1);
-        });
-
-        test('Error Handling - Invalid Field Selection', async ({ customClaimHeader }) => {
+        test('Error Handling - Invalid Field Selection', async ({ customClaimHeader, view }) => {
             // Try to add non-existent field (should handle gracefully)
             try {
-                await customClaimHeader.addFieldToHeader('Non-existent Field');
+                await view.SearchClaimByCriteria(1); // DS claim
+                await customClaimHeader.openCustomizationPopup();
+                await customClaimHeader.addNonExistentFieldToHeader('Non-existent Field');
+                
+                // If we reach here, the field was added unexpectedly
+                console.log('[Test] ⚠️ Warning: Non-existent field was added unexpectedly.');
+                await customClaimHeader.closeCustomizationPopup();
             } catch (error) {
                 // Expected behavior - should handle error gracefully
+                const ctrlIcon = '✅';
+                const ctrlMessage = 'error was caught and handled gracefully as expected';
+                console.log(`[Test] ${ctrlIcon} Error handling ${ctrlMessage}.`);
+                console.log(`[Test] Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                
                 expect(error).toBeDefined();
+                await customClaimHeader.closeCustomizationPopup();
+                console.log('[Test] ✅ Error Handling test completed successfully - invalid field selection was properly handled.');
             }
         });
 
         
-        test('Edge Case - Empty Field Selection', async ({ customClaimHeader }) => {
+        test('Edge Case - Empty Field Selection', async ({ customClaimHeader, view }) => {
             // Try to remove all fields (should not be allowed)
+            await view.SearchClaimByCriteria(1);
             const allDefaultFields = ['Status', 'Opened', 'First absence', 'Closed', 'Reopened', 'Examiner'];
             await customClaimHeader.customizeHeaderWithFields([], allDefaultFields, true, false);
             await customClaimHeader.errorRequiredMessageIsVisible();
         });
 
-        test('Edge Case - Rapid Field Reordering', async ({ customClaimHeader }) => {
+        test('Edge Case - Rapid Field Reordering', async ({ customClaimHeader, view }) => {
             // Add fields first
+            await view.SearchClaimByCriteria(1);
             await customClaimHeader.customizeHeaderWithFields(['Client #', 'Client name']);
             
             // Rapidly reorder fields

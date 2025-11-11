@@ -424,4 +424,6 @@ FodyWeavers.xsd
 /playwright/.cache/
 /playwright/.auth/
 /.env
+/.auth
 .env
+.auth

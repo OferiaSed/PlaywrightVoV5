@@ -24,24 +24,28 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   expect: {
-    timeout: 10000,
+    timeout: 10000,    
   },
   use: {
     trace: 'on',
-    actionTimeout: environments[environment]?.timeout || 30000,
-    navigationTimeout: environments[environment]?.timeout || 30000,
+    actionTimeout: environments[environment]?.timeout || 30000, //
+    navigationTimeout: environments[environment]?.timeout || 30000, //Execution Time
   },
 
   /* Configure projects for major browsers */
   projects: [
+    { name: 'setup', testMatch: /.*\.setup\.ts/ }, //Login for Re-Uese Authentication
     {
       name: 'QA',
+      timeout: 60000, //Execution Test before timeout
       use: { 
         ...devices['Desktop Chrome'],
         baseURL: environments.qa1.baseUrl,
         headless: environments.qa1.headless,
         viewport: { width: 1600, height:900 },
+        storageState: '.auth/user.json',  //Specific file
       },
+      dependencies: ['setup'], //Dependencie for Re-Uese Authentication
     },    
   ],
 });

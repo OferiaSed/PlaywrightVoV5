@@ -43,6 +43,14 @@ export class ViewPage extends BasePage {
     //--------------------------------------------------------------------------------------------
     // Actions for Page Object Model
     //--------------------------------------------------------------------------------------------
+    @step('Go to Dashboard Page')
+    async goToDashboardPage() {
+        await this.goToPage();
+        await this.waitForPageLoad();
+        await this.selectTabMenu('HOME');
+        await this.waitForPageLoad();
+    }
+
     @step('Navigate to VIEW page')
     async goToViewPage() {
         await this.selectTabMenu('VIEW');
@@ -76,9 +84,10 @@ export class ViewPage extends BasePage {
         reader.selectDataSet('ClaimSearch', dataset);
         for(let row = 0; row < reader.count(); row++){
             reader.useRow(row);
-            
+            const claimNumber = reader.getValue('ClaimNumber', '');
+                        
             // Claimant Information Fields
-            await this.inputTextField("Claim number", reader.getValue('ClaimNumber', ''), reader.getValue('ClaimNumberOption', ''));
+            await this.inputTextField("Claim number", claimNumber, reader.getValue('ClaimNumberOption', ''));
             await this.inputTextField("First name", reader.getValue('FirstName', ''));
             await this.inputTextField("Last name", reader.getValue('LastName', ''));
             await this.inputTextField("Employee ID", reader.getValue('EmployeeId', ''));
@@ -109,11 +118,14 @@ export class ViewPage extends BasePage {
             }
 
             // Perform Search
+            console.log(`[Search] Executing search for claim: ${claimNumber || 'N/A'}`);
             await this.clickSearchButton();
             await this.waitForSearchResults();
+            console.log(`[Search] Search completed. Results loaded.`);
             
             // Validate Search Results
-            await this.selectClaimByNumber(reader.getValue('ClaimNumber', ''));
+            console.log(`[Search] Selecting claim: ${claimNumber || 'N/A'}`);
+            await this.selectClaimByNumber(claimNumber);
         }
     }
 
@@ -171,17 +183,27 @@ export class ViewPage extends BasePage {
     async selectClaimByNumber(claimNumber: string) {
         // Wait for results to load
         await this.waitForSearchResults();
+        
         const claimRow = await this.page.locator('tr').
         filter({ has: this.page.locator('td', {hasText: claimNumber}), }).nth(0);
+        
+        // Validate claim row is visible
         await expect(claimRow, `Claim row with number ${claimNumber} should be visible`).toBeVisible();
+        let  isCond = await claimRow.isVisible();
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible in results' : 'should be visible but was not found';
+        console.log(`[Search] ${ctrlIcon} Claim row for "${claimNumber}" ${ctrlMessage}.`);
+        
         
         // Check if the specific claim row exists
         this.delay(2000);
         const claimLink = claimRow.locator('a').nth(0);
         await claimLink.highlight();
+        
         await claimLink.click();
         await this.delay(3000);
         await this.waitForPageLoad();
+        console.log(`[Search] Claim "${claimNumber}" selected successfully.`);
     }
 
 

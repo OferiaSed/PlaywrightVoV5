@@ -96,47 +96,6 @@ export class CertificationsPage extends BasePage {
     
 
     //--------------------------------------------------------------------------------------------
-    // Pagination Locators
-    //--------------------------------------------------------------------------------------------
-
-    private get paginationSection(): Locator {
-        return this.page.locator('p-paginator');
-    }
-
-    private get firstPageButton(): Locator {
-        return this.paginationSection.getByRole('button', { name: 'First Page' });
-    }
-
-    private get nextPageButton(): Locator {
-        return this.paginationSection.getByRole('button', { name: 'Next Page' });
-    }
-
-    private get previousPageButton(): Locator {
-        return this.paginationSection.getByRole('button', { name: 'Previous Page' });
-    }
-
-    private get lastPageButton(): Locator {
-        return this.paginationSection.getByRole('button', { name: 'Last Page' });
-    }
-
-    private get pageNumbers(): Locator {
-        return this.paginationSection.locator('//button[contains(@class, "page")]');
-    }
-
-    private get currentPageSelected(): Locator {
-        return this.paginationSection.locator('span button[aria-current = "page"]');
-    }
-
-    public getPaginationSection(): Locator {
-        return this.paginationSection;
-    }
-
-    public getpageNumbers(pageNumber:string): Locator {
-        return this.paginationSection.getByRole('button', { name: pageNumber });
-    }
-
-
-    //--------------------------------------------------------------------------------------------
     // Expanded Row Section Locators
     //--------------------------------------------------------------------------------------------
 
@@ -329,23 +288,6 @@ export class CertificationsPage extends BasePage {
         await this.delay(2000);        
     }
 
-    @step('Validate Pagination Controls')
-    async validatePaginationControls() {
-        await expect(this.paginationSection, 'Pagination section should be visible').toBeVisible();
-        
-        // Check if pagination is needed (more than one page)
-        const pageNumbers = this.pageNumbers;
-        const pageCount = await pageNumbers.count();
-        
-        if (pageCount > 1) {
-            await expect(this.firstPageButton, 'First page button should be visible').toBeVisible();
-            await expect(this.nextPageButton, 'Next page button should be visible').toBeVisible();
-            await expect(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
-            await expect(this.lastPageButton, 'Last page button should be visible').toBeVisible();
-        }
-    }
-
-
     //--------------------------------------------------------------------------------------------
     // Action Methods
     //--------------------------------------------------------------------------------------------
@@ -378,29 +320,6 @@ export class CertificationsPage extends BasePage {
         await this.validateFilterFunctionality(filterType, filterValue, cleanFilter);
     }
 
-    @step('Navigate to Next Page')
-    async navigateToNextPage() {
-        await expect(this.nextPageButton, 'Next page button should be visible').toBeVisible();
-        await this.nextPageButton.click();
-        await this.delay(2000);
-    }
-
-    @step('Navigate to Previous Page')
-    async navigateToPreviousPage() {
-        await expect(this.previousPageButton, 'Previous page button should be visible').toBeVisible();
-        await this.previousPageButton.click();
-        await this.delay(2000);
-    }
-
-    @step('Navigate to Specific Page')
-    async navigateToSpecificPage(pageNumber: number) {
-        const pageButton = this.pageNumbers.nth(pageNumber - 1);
-        await expect(pageButton, `Page ${pageNumber} button should be visible`).toBeVisible();
-        await pageButton.click();
-        await this.delay(2000);
-    }
-
-
     //--------------------------------------------------------------------------------------------
     // Data Retrieval Methods
     //--------------------------------------------------------------------------------------------
@@ -421,12 +340,6 @@ export class CertificationsPage extends BasePage {
 
 
 
-    @step('Get Cuurent Page Number Selected')
-    async getCurrentPageNumber(): Promise<string> {
-        await expect(this.currentPageSelected, 'Certification count should be visible').toBeVisible();
-        const countText = await this.currentPageSelected.textContent();
-        return countText?.trim() || '';
-    }
 
     //--------------------------------------------------------------------------------------------
     // Comprehensive Validation Methods

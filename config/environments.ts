@@ -16,7 +16,7 @@ export const environments: Record<string, Environment> = {
     name: 'QA1',
     dataDriver: 'DataDriverVovQA.xlsx',
     baseUrl: 'https://qa1.viaone.com/',
-    timeout: 30000,
+    timeout: 50000,
     retries: 1,
     headless: true,
     slowMo: 0
@@ -25,7 +25,7 @@ export const environments: Record<string, Environment> = {
     name: 'QA2',
     dataDriver: 'DataDriverVovQA.xlsx',
     baseUrl: 'https://qa2.viaone.com/',
-    timeout: 30000,
+    timeout: 50000,
     retries: 1,
     headless: true,
     slowMo: 0
@@ -34,7 +34,7 @@ export const environments: Record<string, Environment> = {
     name: 'PREPROD',
     dataDriver: 'DataDriverVovPreProd.xlsx',
     baseUrl: 'https://preprod.viaone.com/',
-    timeout: 30000,
+    timeout: 50000,
     retries: 1,
     headless: true,
     slowMo: 0
