@@ -1,5 +1,4 @@
 import { test, expect } from '../fixtures/BaseTest';
-import { ExcelReader } from '../../utils/helpers/excel-reader';
 
 /**
  * LEAVE - DETAILS>CONTACTS Screen Test Suite
@@ -19,18 +18,16 @@ import { ExcelReader } from '../../utils/helpers/excel-reader';
  * - Data-driven testing scenarios
  */
 
-test.beforeEach(async ({ view }) => {
+test.beforeEach(async ({ view, contacts }) => {
     await view.goToDashboardPage();
     await view.goToClaimSearchTab();
     await view.SearchClaimByCriteria(15);
+    await contacts.navigateToContactsTab();
 });
 
 test.describe('LV Contacts - Page Structure and Header', () => {
     
     test('Validate Contacts Page Header and Structure - Req 3.9.001', async ({ contacts }) => {
-        // Navigate to Contacts tab
-        await contacts.navigateToContactsTab();
-        
         // Validate page header
         await contacts.validateContactsPageHeader();
         
@@ -42,8 +39,6 @@ test.describe('LV Contacts - Page Structure and Header', () => {
     });
 
     test('Validate Grid Columns and Data Format - Req 3.9.001', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate grid has rows
         await contacts.waitTableToBeLoaded();
         const rowCount = await contacts.getGridRowCount();
@@ -54,8 +49,6 @@ test.describe('LV Contacts - Page Structure and Header', () => {
     });
 
     test('Validate Type Column Displays Full Description - Req 3.9.001', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate Type column displays full description, not 3-character codes
         await contacts.validateTypeColumnDisplaysFullDescription(0);
     });
@@ -64,15 +57,11 @@ test.describe('LV Contacts - Page Structure and Header', () => {
 test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
     
     test('Validate Expandable Row Indicator Display - Req 3.9.002', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate expand button ('>') is displayed for rows with additional populated fields
         await contacts.validateExpandableRowIndicator(0);
     });
 
     test('Validate Expanded Row First Column Fields - Req 3.9.002', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Expand first row
         await contacts.expandContactRow(0);
         
@@ -81,8 +70,6 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
     });
 
     test('Validate Other Phone Format - Req 3.9.002', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Expand first row
         await contacts.expandContactRow(0);
         
@@ -103,8 +90,6 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
     });
 
     test('Validate Authorized Fields Format - Req 3.9.002', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Expand first row
         await contacts.expandContactRow(0);
         
@@ -145,8 +130,6 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
     });
 
     test('Validate Comment Field Display - Req 3.9.002', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Expand first row
         await contacts.expandContactRow(0);
         
@@ -163,8 +146,6 @@ test.describe('LV Contacts - Expandable Row Details (First Column)', () => {
     });
 
     test('Validate Row Collapse Functionality - Req 3.9.002', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Expand first row
         await contacts.expandContactRow(0);
         
@@ -181,8 +162,6 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
     
 
     test('Validate Expanded Row Second Column Fields - Req 3.9.003', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Expand first row
         await contacts.expandContactRow(0);
         
@@ -191,8 +170,6 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
     });
 
     test('Validate Contact Date Format - Req 3.9.003', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Expand first row
         await contacts.expandContactRow(0);
         
@@ -224,8 +201,6 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
     });
 
     test('Validate Contact and Contact Place Fields - Req 3.9.003', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Expand first row
         await contacts.expandContactRow(0);
         
@@ -283,8 +258,6 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
     });
 
     test('Validate Complete Expanded Row Data - Req 3.9.002-3.9.003', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate complete expanded row data (both columns)
         await contacts.validateExpandedRowCompleteData(0);
     });
@@ -293,8 +266,6 @@ test.describe('LV Contacts - Expandable Row Details (Second Column)', () => {
 test.describe('LV Contacts - Grid Filtering and Count Display', () => {
     
     test('Validate Filter Functionality - Req 3.9.004', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Get initial row count
         const initialCount = await contacts.getGridRowCount();
         expect(initialCount, 'Grid should have at least one contact row').toBeGreaterThan(0);
@@ -304,8 +275,6 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
     });
 
     test('Validate Contact Count Display Format - Req 3.9.004', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate contact count display format: "1 contact", "3 contacts", etc.
         await contacts.validateContactCountDisplay();
         
@@ -322,8 +291,6 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
     });
 
     test('Validate Filter Updates Contact Count - Req 3.9.004', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-               
         // Apply filter
         await contacts.filterContacts('System-Custom Contact MN2', false);
         
@@ -356,15 +323,11 @@ test.describe('LV Contacts - Grid Filtering and Count Display', () => {
 test.describe('LV Contacts - Pagination Functionality', () => {
     
     test('Validate Pagination Controls Display - Req 3.9.005', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate pagination controls
         await contacts.validatePaginationControls();
     });
 
     test('Validate Next Page Navigation - Req 3.9.005', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Get initial page number before navigation
         let initialPageNumber = await contacts.getCurrentPageNumber();
         console.log(`[Test] Current page before clicking next: ${initialPageNumber}`);
@@ -386,8 +349,6 @@ test.describe('LV Contacts - Pagination Functionality', () => {
     });
 
     test('Validate Previous Page Navigation - Req 3.9.005', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Get initial page number before navigation
         let initialPageNumber = await contacts.getCurrentPageNumber();
         console.log(`[Test] Current page before clicking next: ${initialPageNumber}`);
@@ -424,8 +385,6 @@ test.describe('LV Contacts - Pagination Functionality', () => {
     });
 
     test('Validate Specific Page Navigation - Req 3.9.005', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Check if pagination is available
         const paginationSection = contacts.getPaginationSection();
         const isPaginationVisible = await contacts.isLocatorVisible(paginationSection);
@@ -459,15 +418,11 @@ test.describe('LV Contacts - Pagination Functionality', () => {
 test.describe('LV Contacts - Scroll to Top Link', () => {
     
     test('Validate Scroll to Top Link Visibility - Req 3.9.006', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate scroll to top link is visible at bottom of page
         await contacts.validateScrollToTopLink();
     });
 
     test('Test Scroll to Top Functionality - Req 3.9.006', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-
         // Validate scroll to top link is visible at bottom of page
         await contacts.validateScrollToTopLink();
         
@@ -479,8 +434,6 @@ test.describe('LV Contacts - Scroll to Top Link', () => {
 test.describe('LV Contacts - Standard Footer', () => {
     
     test('Validate Standard Footer Display - Req 3.9.007', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate standard footer is displayed
         await contacts.validateStandardFooter();
     });
@@ -489,8 +442,6 @@ test.describe('LV Contacts - Standard Footer', () => {
 test.describe('LV Contacts - Data Format Validation', () => {
     
     test('Validate All Grid Column Formats - Req 3.9.001', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate all columns for multiple rows
         const rowCount = await contacts.getGridRowCount();
         const rowsToValidate = Math.min(rowCount, 5); // Validate up to 5 rows
@@ -502,8 +453,6 @@ test.describe('LV Contacts - Data Format Validation', () => {
     });
 
     test('Validate Multiple Expanded Rows - Req 3.9.002-3.9.003', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Validate expanded row data for multiple rows
         const rowCount = await contacts.getGridRowCount();
         const rowsToValidate = Math.min(rowCount, 3); // Validate up to 3 rows
@@ -524,8 +473,6 @@ test.describe('LV Contacts - Data Format Validation', () => {
 test.describe('LV Contacts - Error Handling and Edge Cases', () => {
     
     test('Edge Case - Filter with No Results', async ({ contacts }) => {
-        await contacts.navigateToContactsTab();
-        
         // Get initial row count before filter
         const initialRowCount = await contacts.getGridRowCount();
         console.log(`[Test] Initial row count before filter: ${initialRowCount}`);
