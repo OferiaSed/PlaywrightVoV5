@@ -1,0 +1,350 @@
+---
+alwaysApply: true
+---
+
+# Test Case Generation Rules for Playwright Framework
+
+## CRITICAL: MANDATORY WORKFLOW
+
+Before generating ANY test cases, you MUST follow this exact workflow:
+
+### STEP 1: Analyze Existing Components (MANDATORY)
+1. **Read existing page objects** in `tests/pages/` directory
+2. **Identify reusable methods** from BasePage and existing page objects
+3. **Check for similar functionality** that can be extended
+4. **Review existing test patterns** in `tests/specs/` directory
+5. **Identify Angular component patterns** used in existing code
+
+### STEP 2: Identify Reusable Functionality (MANDATORY)
+1. **Check BasePage** for common methods (navigation, pagination, scrolling, etc.)
+2. **Review similar page objects** (e.g., ContactsPage, CertificationsPage) for patterns
+3. **Identify LOB-agnostic methods** that can be parameterized
+4. **Find existing validation patterns** that can be reused
+5. **Locate existing action methods** that can be extended
+
+### STEP 3: Extend Existing Components (MANDATORY)
+1. **NEVER create duplicate functionality** - always extend existing classes
+2. **Use existing methods** from BasePage and other page objects
+3. **Extend existing page objects** rather than creating new ones
+4. **Parameterize existing methods** to handle different LOBs
+5. **Follow existing patterns** from similar test files
+
+### STEP 4: Generate Test Cases Following Patterns (MANDATORY)
+1. **Follow test file structure** from existing spec files
+2. **Use proper naming conventions** (`{LOB}-{feature}.spec.ts`)
+3. **Include comprehensive header comments** with requirement references
+4. **Organize with test.describe() blocks** by functionality
+5. **Use fixtures from BaseTest** - never import page objects directly
+
+## Framework Architecture Understanding
+
+### Page Object Model Structure
+- **BasePage**: Contains common methods (navigation, pagination, scrolling, tab selection)
+- **Page Objects**: Extend BasePage, contain page-specific locators and methods
+- **Fixtures**: Defined in BaseTest.ts, provide page object instances to tests
+- **Step Decorators**: `@step('Description')` for all public methods in page objects
+
+### Test File Structure Pattern
+```typescript
+/**
+ * {LOB} {Feature Name} Test Suite
+ * 
+ * This test suite covers the comprehensive testing of the {Feature Name} functionality
+ * as specified in User Story requirements {Req Numbers}.
+ * 
+ * Test Coverage:
+ * - Feature aspect 1 (Req X.X.XXX)
+ * - Feature aspect 2 (Req X.X.XXX)
+ * - Data-driven testing scenarios
+ */
+
+import { test, expect } from '../fixtures/BaseTest';
+
+test.beforeEach(async ({ view, pageObject }) => {
+    await view.goToDashboardPage();
+    await view.goToClaimSearchTab();
+    await view.SearchClaimByCriteria(datasetNumber);
+    // Additional setup
+});
+
+test.describe('{LOB} Feature - Sub-feature Name', () => {
+    test('Validate Something - Req 3.X.XXX', async ({ pageObject }) => {
+        // Test implementation
+    });
+});
+```
+
+### Page Object Structure Pattern
+```typescript
+import { expect, type Locator, type Page } from '@playwright/test';
+import { BasePage } from './BasePage';
+import { step } from '../fixtures/BaseTest';
+
+export class YourPage extends BasePage {
+    private readonly name = "Your Page Name";
+    
+    constructor(page: Page) {
+        super(page);
+    }
+
+    // Locators organized by functional sections
+    //--------------------------------------------------------------------------------------------
+    // Section Name Locators
+    //--------------------------------------------------------------------------------------------
+    
+    private get elementName(): Locator {
+        return this.page.locator('selector');
+    }
+
+    // Validation Methods
+    @step('Validate Something')
+    async validateSomething() {
+        await expect.soft(this.element, 'Descriptive error message').toBeVisible();
+        let isCond = await this.isLocatorVisible(this.element);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Page Name] ${ctrlIcon} Element ${ctrlMessage}.`);
+    }
+
+    // Action Methods
+    @step('Perform Action')
+    async performAction() {
+        await expect.soft(this.element, 'Element should be visible').toBeVisible();
+        let isCond = await this.isLocatorVisible(this.element);
+        let ctrlIcon = isCond ? '✅': '❌';
+        let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+        console.log(`[Page Name] ${ctrlIcon} Element ${ctrlMessage}.`);
+        
+        await this.element.click();
+        await this.waitForPageLoad();
+        console.log('[Page Name] Action completed successfully.');
+    }
+}
+```
+
+## Angular Component Standards (CRITICAL)
+
+The application uses Angular with these component naming conventions. ALWAYS use these selectors:
+
+### Buttons
+- `app-back-button`, `app-button`, `app-expand-button`, `app-export-button`
+- `app-icon-button`, `app-more-button`, `app-toggle-button`
+- `app-toolbar-button`, `app-watch-button`
+
+### Form Controls
+- `app-autocomplete`, `app-base-control`, `app-checkbox`, `app-claim-number`
+- `app-date-picker`, `app-file-upload`, `app-filter-input`, `app-form-field`
+- `app-help-text`, `app-input-otp`, `app-input`, `app-listbox`, `app-paginator`
+- `app-password-requirements`, `app-pick-list`, `app-radio-button`, `app-range`
+- `app-recaptcha`, `app-requirement-list`, `app-select-button`, `app-select`
+- `app-slider`, `app-ssn`, `app-textarea`, `app-toggle-switch`, `app-yes-no`
+
+### Data Display
+- `app-tree`, `app-table`, `app-column`, `app-sort-icon`
+
+### Layout Components
+- `app-action-row`, `app-card`, `app-confirm-tab-dialog`, `app-dialog`
+- `app-drawer`, `app-empty-state`, `app-expand-panel`, `app-home-card`
+- `app-loading-panel`, `app-menu`, `app-panel`, `app-popover`
+- `app-toggle-panel`, `app-tab`, `app-tab-panel`, `app-detail-panel`
+- `app-detail-item`, `app-gallerioa`, `app-stepper`, `app-step`
+
+### Labels & Indicators
+- `app-address-label`, `app-alert-label`, `app-api-error-label`
+- `app-claim-label`, `app-claim-status-label`, `app-count-label`
+- `app-dot-label`, `app-empty`, `app-error`, `app-help-icon`
+- `app-icon`, `app-label`, `app-link-label`, `app-more-label`
+- `app-page-header`, `app-progressbar`, `app-snackbar`, `app-ssn-label`
+- `app-tag`, `app-toast`, `app-work-week`
+
+## Test Data Management
+
+### Primary Data Source: Inline Test Data
+- **All test data should be included directly in test cases**
+- Review existing test cases to see how test data is implemented
+- Use hardcoded values or constants within test files
+- For data-driven scenarios, use ExcelReader pattern from existing tests
+
+### Excel Data Pattern (When Needed)
+```typescript
+import { ExcelReader } from '../../utils/helpers/excel-reader';
+
+const reader = new ExcelReader(`${this.driverPath}${this.driverFile}`);
+reader.selectDataSet('SheetName', datasetNumber);
+for(let row = 0; row < reader.count(); row++){
+    reader.useRow(row);
+    const value = reader.getValue('ColumnName', '');
+}
+```
+
+## Code Reuse Requirements (CRITICAL)
+
+### 1. MANDATORY: Analyze Before Creating
+- **ALWAYS** read existing page objects first
+- **ALWAYS** check BasePage for reusable methods
+- **ALWAYS** look for similar functionality in existing pages
+- **NEVER** create duplicate functionality
+
+### 2. MANDATORY: Extend Existing Components
+- **NEVER** create new page objects if existing ones can be extended
+- **ALWAYS** use existing methods from BasePage
+- **ALWAYS** extend existing page objects for new features
+- **ALWAYS** parameterize existing methods for multi-LOB support
+
+### 3. MANDATORY: Parameterization for Multi-LOB
+- **Make methods LOB-agnostic** by adding parameters
+- **Use configuration objects** to handle LOB-specific differences
+- **Create LOB-specific test data** rather than LOB-specific classes
+- **Extend existing validation methods** with LOB parameters
+
+## Test Case Generation Checklist
+
+When generating test cases, ensure:
+
+### Test File Requirements
+- [ ] File name follows `{LOB}-{feature}.spec.ts` pattern
+- [ ] Comprehensive header comment with requirement references
+- [ ] Import from `../fixtures/BaseTest`
+- [ ] Proper `test.describe()` organization by functionality
+- [ ] Test names include requirement reference: `- Req X.X.XXX`
+- [ ] `test.beforeEach()` for common setup
+- [ ] Inline comments for complex logic
+
+### Page Object Requirements
+- [ ] Extends `BasePage` class
+- [ ] Locators organized by functional sections with comment separators
+- [ ] Private getters for locators
+- [ ] `@step` decorator on ALL public methods
+- [ ] Console logging with ✅/❌ indicators following exact pattern
+- [ ] Uses `expect.soft()` for non-critical validations
+- [ ] Uses `expect()` for critical assertions
+- [ ] `await this.waitForPageLoad()` after navigation
+
+### Validation Requirements
+- [ ] Comprehensive validation methods with descriptive error messages
+- [ ] Format validation with regex patterns where applicable
+- [ ] Edge case testing included
+- [ ] Error handling with try-catch blocks
+- [ ] Soft assertions for non-blocking validations
+
+### Action Requirements
+- [ ] Action methods log before and after actions
+- [ ] Wait for elements before interaction
+- [ ] Wait for page load after navigation
+- [ ] Proper error handling
+
+### Logging Requirements (MANDATORY)
+- [ ] ALL validation methods include structured logging
+- [ ] ALL action methods include structured logging
+- [ ] Format: `[Page Name] ${ctrlIcon} Message ${ctrlMessage}.`
+- [ ] Use `✅` for success, `❌` for failure, `⚠️` for warnings
+- [ ] Include actual values in error messages
+- [ ] Use `await this.isLocatorVisible()` for visibility checks
+
+### Angular Component Requirements
+- [ ] Use correct Angular component selectors
+- [ ] Test component interactions properly
+- [ ] Validate Angular-specific behaviors
+- [ ] Ensure proper component lifecycle testing
+
+## Common Patterns to Follow
+
+### Navigation Pattern
+```typescript
+test.beforeEach(async ({ view }) => {
+    await view.goToDashboardPage();
+    await view.goToClaimSearchTab();
+    await view.SearchClaimByCriteria(datasetNumber);
+});
+```
+
+### Validation Pattern
+```typescript
+await expect.soft(element, 'Descriptive error message').toBeVisible();
+let isCond = await pageObject.isLocatorVisible(element);
+let ctrlIcon = isCond ? '✅': '❌';
+let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+console.log(`[Test] ${ctrlIcon} Element ${ctrlMessage}.`);
+```
+
+### Format Validation Pattern
+```typescript
+const formatMatches = regexPattern.test(value);
+expect.soft(value, 'Value should match format').toMatch(regexPattern);
+let ctrlIcon = formatMatches ? '✅': '❌';
+let ctrlMessage = formatMatches 
+    ? `is in correct format: "${value}"` 
+    : `should be in format "{expected}" but found "${value}"`;
+console.log(`[Test] ${ctrlIcon} Field format ${ctrlMessage}.`);
+```
+
+### Error Handling Pattern
+```typescript
+try {
+    await performAction();
+} catch (error) {
+    const ctrlIcon = '❌';
+    const ctrlMessage = 'error was caught and handled';
+    console.log(`[Test] ${ctrlIcon} Error handling ${ctrlMessage}.`);
+    expect(error).toBeDefined();
+}
+```
+
+## LOB-Specific Implementation
+
+### Multi-LOB Support
+- Use existing methods for ALL LOBs (DS, LV, WC, GL, AU)
+- Parameterize existing methods to handle LOB-specific differences
+- Create LOB-specific test data in test cases
+- Extend existing validation methods with LOB parameters
+- Follow existing test patterns from DS-claim-header.spec.ts and LV-contacts.spec.ts
+
+### LOB Prefixes
+- **LV**: Leave
+- **DS**: Disability
+- **GL**: General Liability
+- **AU**: Auto Liability
+- **WC**: Workers' Compensation
+
+## Fixtures Available
+
+From BaseTest.ts, these fixtures are available:
+- `login`: LoginPage
+- `home`: HomePage
+- `view`: ViewPage
+- `customClaimHeader`: CustomClaimHeader
+- `certifications`: CertificationsPage
+- `hrDataAccruals`: HRDataAccrualsPage
+- `contacts`: ContactsPage
+- `consoleLogger`: ConsoleLogger
+
+## Important Notes
+
+- **ALWAYS** use fixtures from BaseTest, never import page objects directly
+- **ALL** page object methods must have `@step` decorator
+- **ALL** validation/action methods must include structured logging
+- Test names must include requirement reference: `- Req X.X.XXX`
+- Use `expect.soft()` in page objects and test files for non-blocking validations
+- Use `expect()` only for critical assertions that should fail immediately
+- Wait for page load after navigation actions
+- Use descriptive error messages in assertions
+- Always add logging patterns for expect statements in test files
+
+## Reference Files
+
+- Base fixtures: `tests/fixtures/BaseTest.ts`
+- Base page: `tests/pages/BasePage.ts`
+- Example tests: `tests/specs/LV-claim-header.spec.ts`, `tests/specs/LV-contacts.spec.ts`, `tests/specs/DS-claim-header.spec.ts`
+- Example page objects: `tests/pages/CustomClaimHeader.ts`, `tests/pages/ContactsPage.ts`
+
+## REMEMBER
+
+- **NEVER** create duplicate functionality
+- **ALWAYS** extend existing components
+- **USE** existing functionality
+- **PARAMETERIZE** existing methods for multi-LOB support
+- **FOLLOW** existing patterns and conventions
+- **USE** Angular component selectors correctly
+- **VERIFY** locator accuracy and component linking
+- **INCLUDE** test data directly in test cases
+- **FOLLOW** exact logging patterns from existing code
