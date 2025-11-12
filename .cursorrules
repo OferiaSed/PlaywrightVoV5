@@ -7,7 +7,7 @@ This is a Playwright test automation framework using TypeScript, Page Object Mod
 
 ### Test Specification Files
 - Location: `tests/specs/`
-- Naming: `{LOB}-{feature}.spec.ts` (e.g., `LV-claim-header.spec.ts`, `DS-claim-header.spec.ts`)
+- Naming: `{LOB}-{feature}.spec.ts` (e.g.,  `LV-contacts.spec.ts`, `LV-claim-header.spec.ts`, `DS-claim-header.spec.ts`)
 - LOB prefixes: LV (Leave), DS (Disability), GL (General Liability), AU (Auto Liability), WC (Workers' compensation), etc.
 
 ### Page Object Files
@@ -45,11 +45,12 @@ import { test, expect } from '../fixtures/BaseTest';
 
 ### Test Structure Example
 ```typescript
-test.describe('LV Feature - Sub-feature Name', () => {
+test.describe('{LOB} Feature - Sub-feature Name', () => {
     
     test.beforeEach(async ({ view }) => {
         await view.goToDashboardPage();
         await view.goToClaimSearchTab();
+        ...
     });
 
     test('Validate Something - Req 3.X.XXX', async ({ pageObjectFixture }) => {
@@ -155,8 +156,8 @@ For error scenarios, use try-catch with logging:
 try {
     await performAction();
 } catch (error) {
-    const ctrlIcon = '✅';
-    const ctrlMessage = 'error was caught and handled gracefully as expected';
+    const ctrlIcon = '❌';
+    const ctrlMessage = 'error was caught and handled';
     console.log(`[Test] ${ctrlIcon} Error handling ${ctrlMessage}.`);
     expect(error).toBeDefined();
 }
@@ -246,22 +247,7 @@ async performAction() {
 }
 ```
 
-### Pattern 4: Conditional/Optional Elements
-For elements that may or may not be present (both states are valid):
-```typescript
-const isVisible = await this.isLocatorVisible(element);
-if (isVisible) {
-    let ctrlIcon = '✅';
-    let ctrlMessage = 'is visible (conditionally present)';
-    console.log(`[Page Name] ${ctrlIcon} Element ${ctrlMessage}.`);
-} else {
-    let ctrlIcon = '✅';
-    let ctrlMessage = 'is not visible (not required/not populated)';
-    console.log(`[Page Name] ${ctrlIcon} Element ${ctrlMessage}.`);
-}
-```
-
-### Pattern 5: Informational/Progress Messages
+### Pattern 4: Informational/Progress Messages
 For method start or progress updates:
 ```typescript
 console.log(`[Page Name] Validating {feature} for {context}...`);
@@ -269,7 +255,7 @@ console.log(`[Page Name] Validating {feature} for {context}...`);
 console.log(`[Page Name] Performing {action}...`);
 ```
 
-### Pattern 6: Count/Quantity Validation
+### Pattern 5: Count/Quantity Validation
 For validations involving counts or quantities:
 ```typescript
 const count = await element.count();
@@ -281,26 +267,13 @@ let ctrlMessage = isCond
 console.log(`[Page Name] ${ctrlIcon} Element ${ctrlMessage}.`);
 ```
 
-### Pattern 7: Error Handling
-For try-catch blocks:
-```typescript
-try {
-    await performAction();
-} catch (error) {
-    const ctrlIcon = '✅';
-    const ctrlMessage = 'error was caught and handled gracefully as expected';
-    console.log(`[Page Name] ${ctrlIcon} Error handling ${ctrlMessage}.`);
-    expect(error).toBeDefined();
-}
-```
-
-### Pattern 8: Warning Messages
+### Pattern 6: Warning Messages
 For non-critical issues or missing optional data:
 ```typescript
 console.log(`[Page Name] ⚠️ {Element/Field} is empty or not found.`);
 ```
 
-### Pattern 9: Multiple Element Validation in Loop
+### Pattern 7: Multiple Element Validation in Loop
 When validating multiple similar elements:
 ```typescript
 for (const item of items) {
@@ -311,6 +284,35 @@ for (const item of items) {
     let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
     console.log(`[Page Name] ${ctrlIcon} Element "${item}" ${ctrlMessage}.`);
 }
+```
+
+### Test File Logging Patterns
+For expect statements in test files, use similar patterns:
+```typescript
+// Pattern 1: Visibility check in tests
+await expect.soft(element, 'Element should be visible').toBeVisible();
+let isCond = await contacts.isLocatorVisible(element);
+let ctrlIcon = isCond ? '✅': '❌';
+let ctrlMessage = isCond ? 'is visible' : 'should be visible but was not found';
+console.log(`[Test] ${ctrlIcon} Element ${ctrlMessage}.`);
+
+// Pattern 2: Format validation in tests
+const formatMatches = regexPattern.test(value);
+expect.soft(value, 'Value should match format').toMatch(regexPattern);
+let ctrlIcon = formatMatches ? '✅': '❌';
+let ctrlMessage = formatMatches 
+    ? `is in correct format: "${value}"` 
+    : `should be in format "{expected}" but found "${value}"`;
+console.log(`[Test] ${ctrlIcon} Field format ${ctrlMessage}.`);
+
+// Pattern 6: Count validation in tests
+const countIsValid = count > 0;
+expect.soft(count, 'Count should be greater than 0').toBeGreaterThan(0);
+let ctrlIcon = countIsValid ? '✅': '❌';
+let ctrlMessage = countIsValid 
+    ? `found (${count} items)` 
+    : `no items found (expected at least 1, found ${count})`;
+console.log(`[Test] ${ctrlIcon} Count ${ctrlMessage}.`);
 ```
 
 ### Logging Rules Summary
@@ -324,6 +326,7 @@ for (const item of items) {
 8. Make messages descriptive and include actual values when relevant
 9. For format validations, include both expected and actual values in error messages
 10. Use `expect.soft()` before logging to ensure non-blocking validation
+11. In test files, use `[Test]` prefix instead of `[Page Name]` for console logs
 
 ## Fixtures Available
 - `login`: LoginPage
@@ -391,6 +394,8 @@ test.describe('Feature - Sub-feature', () => {
 4. Use descriptive test names with requirement numbers
 5. Include `beforeEach` setup where needed
 6. Add inline comments for complex logic
+7. Use `expect.soft()` for non-blocking validations in test files
+8. Add logging patterns for all expect statements
 
 ### For Page Objects:
 1. Extend `BasePage` class
@@ -405,11 +410,13 @@ test.describe('Feature - Sub-feature', () => {
 
 - Always use fixtures from BaseTest, never import page objects directly
 - All page object methods must have `@step` decorator
-- Console logging format must be consistent: `[Page Name] ${ctrlIcon} Message`
+- Console logging format must be consistent: `[Page Name] ${ctrlIcon} Message` or `[Test] ${ctrlIcon} Message`
 - Test names must include requirement reference: `- Req X.X.XXX`
-- Use `expect.soft()` in page objects, `expect()` in tests for critical assertions
+- Use `expect.soft()` in page objects and test files for non-blocking validations
+- Use `expect()` only for critical assertions that should fail immediately
 - Wait for page load after navigation actions
 - Use descriptive error messages in assertions
+- Always add logging patterns for expect statements in test files
 
 ## Reference Files
 - Base fixtures: `tests/fixtures/BaseTest.ts`

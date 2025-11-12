@@ -1,3 +1,16 @@
+***************************************************************************
+*                                                                         *
+*                                                                         *
+*                  ██╗   ██╗ ██████╗ ██╗   ██╗███████╗                    *
+*                  ██║   ██║██╔═══██╗██║   ██║██╔════╝                    *
+*                  ██║   ██║██║   ██║██║   ██║███████╗                    *
+*                  ╚██╗ ██╔╝██║   ██║╚██╗ ██╔╝╚════██║                    *
+*                   ╚████╔╝ ╚██████╔╝ ╚████╔╝ ███████║                    *
+*                    ╚═══╝   ╚═════╝   ╚═══╝  ╚══════╝                    *
+*                                                                         *
+***************************************************************************
+
+
 # 🧪 Playwright Automation Test Framework
 
 This repository contains functional test automation framework built with Playwright, developed in TypeScript. It's designed to validate principal functionality for Smart.ly Project at Segdwick, with support for both local and CI/CD execution.
@@ -102,3 +115,22 @@ playwright-framework/
 
 ## ▶️ Open the report:
 Open the report executing this command: npx playwright show-report
+
+---
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[Repository Usage Guide](docs/REPOSITORY_USAGE.md)** - Complete guide on how to use the repository, write tests, and follow best practices
+- **[GitHub Actions Guide](docs/GITHUB_ACTIONS.md)** - Detailed documentation about CI/CD workflows, configuration, and troubleshooting
+- **[PowerPoint Layers](docs/POWERPOINT_LAYERS.md)** - Structured outline for creating presentations about the framework
+- **[Git Workflow Guide](docs/GIT_WORKFLOW_GUIDE.md)** - Beginner-friendly guide for Git operations (cloning, branching, committing, etc.)
+
+### Quick Links
+- [Getting Started](docs/REPOSITORY_USAGE.md#getting-started)
+- [Writing Tests](docs/REPOSITORY_USAGE.md#writing-tests)
+- [Page Object Model](docs/REPOSITORY_USAGE.md#page-object-model)
+- [CI/CD Workflow](docs/GITHUB_ACTIONS.md#current-workflow)
+- [Git Workflow for Beginners](docs/GIT_WORKFLOW_GUIDE.md#what-is-git)
+- [Troubleshooting](docs/REPOSITORY_USAGE.md#troubleshooting)
