@@ -112,37 +112,91 @@ export class DetailsPage extends BasePage {
         return this.page.getByRole('tab', { name: 'ALTERNATE NUMBERS' });
     }
 
+    // Fields Tab panel container - all Fields Tab elements are within p-tabpanels
+    private get fieldsTabPanel(): Locator {
+        return this.page.locator('p-tabpanels').getByRole('tabpanel', { name: 'fields' });
+    }
+
     private get expandAllToggle(): Locator {
-        return this.page.locator('[data-testid="expand-all-toggle"]');
+        return this.fieldsTabPanel.getByRole('switch', { name: 'Expand all' });
     }
 
     private get exportIcon(): Locator {
-        return this.page.locator('[data-testid="export-icon"]');
+        return this.fieldsTabPanel.getByRole('button', { name: 'Export' });
     }
 
     private get saveChangesButton(): Locator {
-        return this.page.getByRole('button', { name: 'Save changes' });
+        return this.fieldsTabPanel.getByRole('button', { name: 'Save changes' });
     }
 
     private get resetButton(): Locator {
-        return this.page.getByRole('button', { name: 'Reset' });
+        return this.fieldsTabPanel.getByRole('button', { name: 'Reset' });
     }
 
-    // Locators for custom field cards
+    // Locators for custom field cards - scoped within p-tabpanels
+    // Cards are identified by their heading (level 3) - the card "container" is the section
+    // that includes the heading, expand/collapse button, and region with table
     private getCustomFieldCard(categoryName: string): Locator {
-        return this.page.locator(`[data-testid="custom-field-card-${categoryName}"]`);
+        // Find the heading for this category, then get its parent container
+        // The card structure: caption (with heading) -> button -> region (when expanded)
+        const heading = this.fieldsTabPanel.getByRole('heading', { name: categoryName, level: 3 });
+        // Get the caption parent, then its parent container
+        return heading.locator('..').locator('..');
     }
 
     private getCustomFieldCardHeader(categoryName: string): Locator {
-        return this.getCustomFieldCard(categoryName).locator('[data-testid="card-header"]');
+        // Card header is the heading within the caption
+        return this.fieldsTabPanel.getByRole('heading', { name: categoryName, level: 3 });
     }
 
     private getCustomFieldCardChevron(categoryName: string): Locator {
-        return this.getCustomFieldCard(categoryName).locator('[data-testid="card-chevron"]');
+        // Chevron button follows the heading in the DOM structure
+        // Button aria-label is "Collapse undefined panel" when expanded or "Expand undefined panel" when collapsed
+        // Find all headings and buttons, match by position
+        const headings = this.fieldsTabPanel.getByRole('heading', { level: 3 });
+        const buttons = this.fieldsTabPanel.getByRole('button').filter({ 
+            hasText: /Expand.*panel|Collapse.*panel/i 
+        });
+        
+        // This is a helper - the actual finding will be done in the expand method
+        // For now, return a locator that finds buttons with the correct aria-label pattern
+        // The expand method will need to find the correct one by position
+        return buttons.first();
+    }
+
+    // Helper method to find table index for a category (used internally)
+    private async getCategoryTableIndex(categoryName: string): Promise<number> {
+        const headings = this.fieldsTabPanel.getByRole('heading', { level: 3 });
+        const headingCount = await headings.count();
+        
+        for (let i = 0; i < headingCount; i++) {
+            const heading = headings.nth(i);
+            const text = await heading.textContent();
+            if (text?.trim() === categoryName) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Helper method to get the table locator for a specific category
+    private async getCustomFieldTableForCategory(categoryName: string): Promise<Locator> {
+        const tableIndex = await this.getCategoryTableIndex(categoryName);
+        if (tableIndex === -1) {
+            throw new Error(`Category "${categoryName}" not found`);
+        }
+        
+        const tables = this.fieldsTabPanel.getByRole('region').getByRole('table');
+        return tables.nth(tableIndex);
     }
 
     private getCustomFieldTable(categoryName: string): Locator {
-        return this.getCustomFieldCard(categoryName).locator('table');
+        // Deprecated: Use getCustomFieldTableForCategory instead for async access
+        // This is kept for backward compatibility but may not work correctly with multiple cards
+        return this.fieldsTabPanel
+            .getByRole('region')
+            .getByRole('table')
+            .first();
     }
 
     // HR Fields Tab elements
@@ -155,8 +209,14 @@ export class DetailsPage extends BasePage {
     }
 
     // Alternate Numbers Tab elements
+    private get alternateNumbersTabContainer(): Locator {
+        return this.page.locator('.tw-flex.tw-gap-8');
+    }
+
     private get alternateNumbersTable(): Locator {
-        return this.page.locator('[data-testid="alternate-numbers-table"]');
+        // Table is within the .tw-flex.tw-gap-8 container
+        // Using role-based locator to find table with columnheaders "Alternate Number" and "Type"
+        return this.alternateNumbersTabContainer.getByRole('table');
     }
 
     // Dynamic locator for menu items
@@ -360,7 +420,7 @@ export class DetailsPage extends BasePage {
     @step('Validate Custom Fields page displays Fields and HR Data sections')
     async validateCustomFieldsSections(): Promise<void> {
         await this.navigateToCustomFields();
-
+        
         // Validate Fields section is present
         await this.fieldsTab.click();
         await this.waitForPageLoad();
@@ -495,8 +555,8 @@ export class DetailsPage extends BasePage {
     @step('Validate Fields tab contains expandable cards')
     async validateFieldsTabExpandableCards(): Promise<void> {
         await this.navigateToFieldsTab();
-        // Check for at least one custom field card
-        const cards = this.page.locator('[data-testid^="custom-field-card-"]');
+        // Check for at least one custom field card (identified by heading level 3 within p-tabpanels)
+        const cards = this.fieldsTabPanel.getByRole('heading', { level: 3 });
         const cardCount = await cards.count();
         expect(cardCount, 'At least one custom field card should be visible').toBeGreaterThan(0);
     }
@@ -504,34 +564,63 @@ export class DetailsPage extends BasePage {
     @step('Validate top card is expanded by default')
     async validateTopCardExpandedByDefault(): Promise<void> {
         await this.navigateToFieldsTab();
-        const cards = this.page.locator('[data-testid^="custom-field-card-"]');
-        const firstCard = cards.first();
-        const firstCardTable = firstCard.locator('table');
+        // First card heading
+        const firstCardHeading = this.fieldsTabPanel.getByRole('heading', { level: 3 }).first();
+        // Find the table within the region associated with this card
+        const firstCardTable = this.fieldsTabPanel.getByRole('table').first();
         await expect(firstCardTable, 'Top card table should be visible (expanded)').toBeVisible();
     }
 
     @step('Validate other cards are collapsed by default')
     async validateOtherCardsCollapsedByDefault(): Promise<void> {
         await this.navigateToFieldsTab();
-        const cards = this.page.locator('[data-testid^="custom-field-card-"]');
-        const cardCount = await cards.count();
+        const cardHeadings = this.fieldsTabPanel.getByRole('heading', { level: 3 });
+        const cardCount = await cardHeadings.count();
         
         if (cardCount > 1) {
-            for (let i = 1; i < cardCount; i++) {
-                const card = cards.nth(i);
-                const table = card.locator('table');
-                // Table should not be visible if card is collapsed
-                const isVisible = await table.isVisible().catch(() => false);
-                expect(isVisible, `Card ${i + 1} should be collapsed by default`).toBeFalsy();
+            // Get all tables - first one should be visible (expanded), others should not
+            const tables = this.fieldsTabPanel.getByRole('table');
+            const tableCount = await tables.count();
+            
+            // Check that only the first table (associated with first card) is visible
+            if (tableCount > 1) {
+                for (let i = 1; i < tableCount; i++) {
+                    const table = tables.nth(i);
+                    const isVisible = await table.isVisible().catch(() => false);
+                    expect(isVisible, `Card ${i + 1} should be collapsed by default`).toBeFalsy();
+                }
             }
         }
     }
 
     @step('Expand custom field card')
     async expandCustomFieldCard(categoryName: string): Promise<void> {
-        const chevron = this.getCustomFieldCardChevron(categoryName);
-        await expect(chevron, `Chevron for ${categoryName} should be visible`).toBeVisible();
-        await chevron.click();
+        // Find the heading for this category
+        const headings = this.fieldsTabPanel.getByRole('heading', { level: 3 });
+        const headingCount = await headings.count();
+        
+        let headingIndex = -1;
+        for (let i = 0; i < headingCount; i++) {
+            const heading = headings.nth(i);
+            const text = await heading.textContent();
+            if (text?.trim() === categoryName) {
+                headingIndex = i;
+                break;
+            }
+        }
+        
+        if (headingIndex === -1) {
+            throw new Error(`Category "${categoryName}" not found`);
+        }
+        
+        // Find the button that follows this heading (buttons with aria-label "Expand undefined panel" or "Collapse undefined panel")
+        const buttons = this.fieldsTabPanel.getByRole('button').filter({ 
+            hasText: /Expand.*panel|Collapse.*panel/i 
+        });
+        const button = buttons.nth(headingIndex);
+        
+        await expect(button, `Expand/collapse button for ${categoryName} should be visible`).toBeVisible();
+        await button.click();
         await this.waitForPageLoad();
     }
 
@@ -555,12 +644,16 @@ export class DetailsPage extends BasePage {
 
     @step('Validate all cards are expanded after toggle')
     async validateAllCardsExpanded(): Promise<void> {
-        const cards = this.page.locator('[data-testid^="custom-field-card-"]');
-        const cardCount = await cards.count();
+        const cardHeadings = this.fieldsTabPanel.getByRole('heading', { level: 3 });
+        const cardCount = await cardHeadings.count();
+        const tables = this.fieldsTabPanel.getByRole('table');
+        const tableCount = await tables.count();
         
-        for (let i = 0; i < cardCount; i++) {
-            const card = cards.nth(i);
-            const table = card.locator('table');
+        // All tables should be visible when all cards are expanded
+        expect(tableCount, 'All cards should have visible tables when expanded').toBeGreaterThanOrEqual(cardCount);
+        
+        for (let i = 0; i < Math.min(cardCount, tableCount); i++) {
+            const table = tables.nth(i);
             await expect(table, `Card ${i + 1} should be expanded`).toBeVisible();
         }
     }
@@ -570,7 +663,14 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        // Find the table for this specific category by index
+        const tableIndex = await this.getCategoryTableIndex(categoryName);
+        if (tableIndex === -1) {
+            throw new Error(`Category "${categoryName}" not found`);
+        }
+        
+        const tables = this.fieldsTabPanel.getByRole('region').getByRole('table');
+        const table = tables.nth(tableIndex);
         const headers = table.locator('thead th');
         
         const expectedColumns = ['FIELD #', 'FIELD', 'VALUE', 'VALIDATION CODE DESCRIPTION'];
@@ -588,7 +688,24 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        // Find the table for this specific category by index
+        const tableIndex = await this.getCategoryTableIndex(categoryName);
+        if (tableIndex === -1) {
+            throw new Error(`Category "${categoryName}" not found`);
+        }
+        
+        const tables = this.fieldsTabPanel.getByRole('region').getByRole('table');
+        const table = tables.nth(tableIndex);
+        
+        // Validate Field # column header is visible
+        const fieldNumberHeader = table.getByRole('columnheader', { name: 'Field #' });
+        await expect(fieldNumberHeader, 'Field # column header should be visible').toBeVisible();
+        
+        // Validate ascending sort indicator is visible (default sort)
+        const ascendingSortIndicator = fieldNumberHeader.locator('.svg-inline--fa.fa-arrow-up-short-wide').first();
+        await expect(ascendingSortIndicator, 'Ascending sort indicator should be visible for default sort').toBeVisible();
+        
+        // Validate data is sorted in ascending order
         const rows = table.locator('tbody tr');
         const rowCount = await rows.count();
         
@@ -608,9 +725,10 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
-        const filter = table.locator('input[type="text"]').first();
-        await expect(filter, 'Global filter should be visible').toBeVisible();
+        // Filter button is within the region associated with the card
+        const card = this.getCustomFieldCard(categoryName);
+        const filterButton = card.getByRole('button', { name: 'Filter' });
+        await expect(filterButton, 'Global filter button should be visible').toBeVisible();
     }
 
     @step('Apply table filter')
@@ -618,9 +736,11 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
-        const filter = table.locator('input[type="text"]').first();
-        await filter.fill(filterValue);
+        // Filter input is within the region, typically near the Filter button
+        const card = this.getCustomFieldCard(categoryName);
+        const region = card.getByRole('region');
+        const filterInput = region.locator('input[type="text"]').first();
+        await filterInput.fill(filterValue);
         await this.waitForPageLoad();
     }
 
@@ -642,9 +762,11 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
-        const countText = table.locator('[data-testid="field-count"]');
-        const countTextContent = await countText.textContent();
+        // Field count is in a paragraph within the region (e.g., "24 fields")
+        const card = this.getCustomFieldCard(categoryName);
+        const region = card.getByRole('region');
+        const countParagraph = region.getByRole('paragraph').filter({ hasText: /fields/i });
+        const countTextContent = await countParagraph.textContent();
         
         expect(countTextContent, 'Field count should be displayed').toContain('fields');
         expect(countTextContent, 'Field count should contain a number').toMatch(/\d+/);
@@ -655,7 +777,7 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        const table = await this.getCustomFieldTableForCategory(categoryName);
         const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
         const hrTag = fieldRow.locator('[data-testid="hr-tag"]');
         await expect(hrTag, `HR tag should be visible for field ${fieldNumber}`).toBeVisible();
@@ -666,7 +788,7 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        const table = await this.getCustomFieldTableForCategory(categoryName);
         const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
         const hrTag = fieldRow.locator('[data-testid="hr-tag"]');
         
@@ -717,7 +839,7 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        const table = await this.getCustomFieldTableForCategory(categoryName);
         const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
         const valueCell = fieldRow.locator('td').nth(2); // VALUE column
         
@@ -754,7 +876,7 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        const table = await this.getCustomFieldTableForCategory(categoryName);
         const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
         const valueCell = fieldRow.locator('td').nth(2);
         
@@ -818,7 +940,7 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        const table = await this.getCustomFieldTableForCategory(categoryName);
         const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
         const valueCell = fieldRow.locator('td').nth(2);
         const input = valueCell.locator('input');
@@ -839,7 +961,7 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        const table = await this.getCustomFieldTableForCategory(categoryName);
         const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
         const valueCell = fieldRow.locator('td').nth(2);
         const input = valueCell.locator('input');
@@ -860,7 +982,7 @@ export class DetailsPage extends BasePage {
         await this.navigateToFieldsTab();
         await this.expandCustomFieldCard(categoryName);
         
-        const table = this.getCustomFieldTable(categoryName);
+        const table = await this.getCustomFieldTableForCategory(categoryName);
         const fieldRow = table.locator(`tbody tr:has-text("${fieldNumber}")`);
         const valueCell = fieldRow.locator('td').nth(2);
         const input = valueCell.locator('input');
@@ -973,7 +1095,27 @@ export class DetailsPage extends BasePage {
     @step('Validate Alternate Numbers tab table')
     async validateAlternateNumbersTabTable(): Promise<void> {
         await this.navigateToAlternateNumbersTab();
+        
+        // Validate the container is visible
+        await expect(this.alternateNumbersTabContainer, 'Alternate Numbers tab container should be visible').toBeVisible();
+        
+        // Validate Filter button is visible
+        const filterButton = this.alternateNumbersTabContainer.getByRole('button', { name: 'Filter' });
+        await expect(filterButton, 'Filter button should be visible').toBeVisible();
+        
+        // Validate the table is visible
         await expect(this.alternateNumbersTable, 'Alternate Numbers table should be visible').toBeVisible();
+        
+        // Validate table headers
+        await expect(
+            this.alternateNumbersTable.getByRole('columnheader', { name: 'Alternate Number' }),
+            'Alternate Number column header should be visible'
+        ).toBeVisible();
+        
+        await expect(
+            this.alternateNumbersTable.getByRole('columnheader', { name: 'Type' }),
+            'Type column header should be visible'
+        ).toBeVisible();
     }
 
     //--------------------------------------------------------------------------------------------

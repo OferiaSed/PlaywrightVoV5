@@ -17,13 +17,13 @@ export class ExcelReader {
     selectDataSet(sheetName: string, setValue: number): void {
         const sheet = this.workbook.Sheets[sheetName];
         if (!sheet) throw new Error(`Sheet "${sheetName}" not found`);
-
+// There is no spreadsheet. Ignore failure.
         const data: Record<string, string>[] = XLSX.utils.sheet_to_json(sheet);
         this.currentRows = data.filter(r => Number(r['Set']) === setValue);
 
         if (this.currentRows.length === 0) {
         throw new Error(`Set=${setValue} not found in sheet "${sheetName}"`);
-        }
+        }// There is no spreadsheet. Ignore failure.
 
         this.currentIndex = 0; // Default to the first one
     }

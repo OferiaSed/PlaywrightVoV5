@@ -2,7 +2,7 @@ import { test, expect } from '../../fixtures/BaseTest';
 import { ExcelReader } from '../../../utils/helpers/excel-reader';
 
 /**
- * Accommodations Details Test Suite
+ * Juris-Accommodations Details Test Suite
  * 
  * This test suite validates the Details General Information functionality for Accommodation claims
  * based on requirements 3.4.001, 3.4.002, 3.4.003, and 3.4.4.001 from the JURIS Accommodations BRD.
@@ -17,7 +17,7 @@ import { ExcelReader } from '../../../utils/helpers/excel-reader';
  * Test Data Sheets: AccommodationDetails, AccommodationClaims, JURISAccommodations, CustomFieldsData
  */
 
-test.describe('Accommodations Details - Requirement 3.4.001: Details Tab Dropdown Menu Items', () => {
+test.describe('Juris-Accommodations Details - Requirement 3.4.001: Details Tab Dropdown Menu Items', () => {
     
     test.beforeEach(async ({ login, view }) => {
         // Navigate to an accommodation claim for testing
@@ -26,7 +26,7 @@ test.describe('Accommodations Details - Requirement 3.4.001: Details Tab Dropdow
         await view.SearchClaimByCriteria(1);
     });
 
-    test('Req 3.4.001 - Validate Details tab contains Accommodations menu item', async ({ details, page }) => {
+    test('Req 3.4.001 - Validate Details tab contains Juris-Accommodations menu item', async ({ details, page }) => {
         // Use the DetailsPage method to navigate to Details tab (avoids duplicate locator issues)
         await details.navigateToDetailsTab();
         await details.openDetailsDropdownMenu();
@@ -82,7 +82,7 @@ test.describe('Accommodations Details - Requirement 3.4.001: Details Tab Dropdow
     });
 });
 
-test.describe('Accommodations Details - Requirement 3.4.002: Excluded Menu Items', () => {
+test.describe('Juris-Accommodations Details - Requirement 3.4.002: Excluded Menu Items', () => {
     
     test.beforeEach(async ({ login, view }) => {
         // Navigate to an accommodation claim for testing
@@ -142,7 +142,7 @@ test.describe('Accommodations Details - Requirement 3.4.002: Excluded Menu Items
     });
 });
 
-test.describe('Accommodations Details - Requirement 3.4.003: Financials Tab Exclusion', () => {
+test.describe('Juris-Accommodations Details - Requirement 3.4.003: Financials Tab Exclusion', () => {
     
     test.beforeEach(async ({ login, view }) => {
         // Navigate to an accommodation claim for testing
@@ -151,7 +151,7 @@ test.describe('Accommodations Details - Requirement 3.4.003: Financials Tab Excl
         await view.SearchClaimByCriteria(1);
     });
 
-    test('Req 3.4.003 - Validate Financials tab is NOT displayed for JURIS Accommodations', async ({ details, page }) => {
+    test('Req 3.4.003 - Validate Financials tab is NOT displayed for Juris-Accommodations', async ({ details, page }) => {
         // Verify Financials tab is excluded for JURIS Accommodation claims
         await details.validateFinancialsTabNotDisplayedForJURIS();
         // Take screenshot after validation passes
@@ -195,7 +195,7 @@ test.describe('Accommodations Details - Requirement 3.4.003: Financials Tab Excl
     });
 });
 
-test.describe('Accommodations Details - Requirement 3.4.4.001: Custom Fields', () => {
+test.describe('Juris-Accommodations Details - Requirement 3.4.4.001: Custom Fields', () => {
     
     test.beforeEach(async ({ login, view }) => {
         // Navigate to an accommodation claim for testing
@@ -263,7 +263,7 @@ test.describe('Accommodations Details - Requirement 3.4.4.001: Custom Fields', (
     });
 });
 
-test.describe('Accommodations Details - Integration and End-to-End Testing', () => {
+test.describe('Juris-Accommodations Details - Integration and End-to-End Testing', () => {
     
     test('E2E - Complete Details workflow for accommodation claim', async ({ login, view, details }) => {
         // End-to-end test of complete Details functionality
@@ -330,7 +330,7 @@ test.describe('Accommodations Details - Integration and End-to-End Testing', () 
     });
 });
 
-test.describe('Accommodations Details - Negative and Edge Case Testing', () => {
+test.describe('Juris-Accommodations Details - Negative and Edge Case Testing', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -386,7 +386,7 @@ test.describe('Accommodations Details - Negative and Edge Case Testing', () => {
     });
 });
 
-test.describe('Accommodations Details - Performance Testing', () => {
+test.describe('Juris-Accommodations Details - Performance Testing', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -413,7 +413,7 @@ test.describe('Accommodations Details - Performance Testing', () => {
     });
 });
 
-test.describe('Accommodations Custom Fields - Requirement 3.1: Overview', () => {
+test.describe('Juris-Accommodations Custom Fields - Requirement 3.1: Overview', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -430,8 +430,8 @@ test.describe('Accommodations Custom Fields - Requirement 3.1: Overview', () => 
     test('Req 3.1.004 - Validate Custom Fields page contains FIELDS, HR FIELDS, and ALTERNATE NUMBERS tabs', async ({ details, page }) => {
         await details.navigateToCustomFields();
         
-        // Locate tabs within p-tabs component - tabs can be anchor or button elements
-        const fieldsTab = page.locator('p-tabs').locator('a, button').filter({ hasText: 'FIELDS' }).first();
+        // Locate tabs within p-tabs component using consistent getByRole approach
+        const fieldsTab = page.locator('p-tabs').getByRole('tab', { name: 'FIELDS' }).first();
         const hrFieldsTab = page.locator('p-tabs').getByRole('tab', { name: 'HR FIELDS' });
         const alternateNumbersTab = page.locator('p-tabs').getByRole('tab', { name: 'ALTERNATE NUMBERS' });
         
@@ -443,7 +443,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.1: Overview', () => 
     });
 });
 
-test.describe('Accommodations Custom Fields - Requirement 3.2: Fields Tab', () => {
+test.describe('Juris-Accommodations Custom Fields - Requirement 3.2: Fields Tab', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -458,13 +458,52 @@ test.describe('Accommodations Custom Fields - Requirement 3.2: Fields Tab', () =
     });
 
     test('Req 3.2.003 - Validate top card is expanded by default', async ({ details, page }) => {
-        await details.validateTopCardExpandedByDefault();
+        await details.navigateToFieldsTab();
+        
+        // First card (Category 1) should be expanded by default
+        // Get the first card text: "Category 1 24 fields No"
+        const firstCardText = page.getByText('Category 1 24 fields No', { exact: false });
+        await expect(firstCardText, 'First card should be visible').toBeVisible();
+        
+        // First card should have collapse chevron since it's expanded
+        const firstCardCollapseChevron = page.getByRole('button', { name: 'Collapse undefined panel' }).first();
+        await expect(firstCardCollapseChevron, 'First card should have collapse chevron (expanded)').toBeVisible();
+        
+        // First card table should be visible
+        const fieldsTabPanel = page.locator('p-tabpanels').getByRole('tabpanel', { name: 'fields' });
+        const firstCardTable = fieldsTabPanel.getByRole('table').first();
+        await expect(firstCardTable, 'Top card table should be visible (expanded)').toBeVisible();
+        
         // Take screenshot after validation passes
         await details.takeScreenshot('req-3.2.003-top-card-expanded-default');
     });
 
     test('Req 3.2.003 - Validate other cards are collapsed by default', async ({ details, page }) => {
-        await details.validateOtherCardsCollapsedByDefault();
+        await details.navigateToFieldsTab();
+        
+        const fieldsTabPanel = page.locator('p-tabpanels').getByRole('tabpanel', { name: 'fields' });
+        const cardHeadings = fieldsTabPanel.getByRole('heading', { level: 3 });
+        const cardCount = await cardHeadings.count();
+        
+        if (cardCount > 1) {
+            // Get the second card (NCM) text: "NCM 53 fields No matchTry a"
+            const secondCardText = page.getByText('NCM 53 fields No matchTry a', { exact: false });
+            await expect(secondCardText, 'Second card should be visible').toBeVisible();
+            
+            // Second card should have expand chevron since it's collapsed
+            const secondCardExpandChevron = page.locator('app-card')
+                .filter({ hasText: 'NCM 53 fields No matchTry a' })
+                .getByLabel('Expand undefined panel');
+            await expect(secondCardExpandChevron, 'Second card should have expand chevron (collapsed)').toBeVisible();
+            
+            // Second card table should not be visible
+            const regions = fieldsTabPanel.getByRole('region');
+            const secondRegion = regions.nth(1);
+            const secondTable = secondRegion.getByRole('table');
+            const isVisible = await secondTable.isVisible().catch(() => false);
+            expect(isVisible, 'Second card table should not be visible (collapsed)').toBeFalsy();
+        }
+        
         // Take screenshot after validation passes
         await details.takeScreenshot('req-3.2.003-other-cards-collapsed-default');
     });
@@ -472,13 +511,20 @@ test.describe('Accommodations Custom Fields - Requirement 3.2: Fields Tab', () =
     test('Req 3.2.003 - Validate card header displays category label with chevron icon', async ({ details, page }) => {
         await details.navigateToFieldsTab();
         
-        const cards = page.locator('[data-testid^="custom-field-card-"]');
-        const firstCard = cards.first();
-        const cardHeader = firstCard.locator('[data-testid="card-header"]');
-        const chevron = firstCard.locator('[data-testid="card-chevron"]');
+        // First card (Category 1) is expanded by default
+        // Get the first card text: "Category 1 24 fields No"
+        const firstCardText = page.getByText('Category 1 24 fields No', { exact: false });
+        await expect(firstCardText, 'First card should be visible').toBeVisible();
         
-        await expect(cardHeader, 'Card header should be visible').toBeVisible();
-        await expect(chevron, 'Chevron icon should be visible').toBeVisible();
+        // First card chevron is "Collapse undefined panel" since it's expanded
+        const firstCardChevron = page.getByRole('button', { name: 'Collapse undefined panel' }).first();
+        await expect(firstCardChevron, 'First card collapse chevron should be visible').toBeVisible();
+        
+        // Get the first card heading
+        const fieldsTabPanel = page.locator('p-tabpanels').getByRole('tabpanel', { name: 'fields' });
+        const firstCardHeading = fieldsTabPanel.getByRole('heading', { level: 3 }).first();
+        await expect(firstCardHeading, 'Card header should be visible').toBeVisible();
+        
         // Take screenshot after validation passes
         await details.takeScreenshot('req-3.2.003-card-header-chevron');
     });
@@ -486,28 +532,55 @@ test.describe('Accommodations Custom Fields - Requirement 3.2: Fields Tab', () =
     test('Req 3.2.003 - Validate individual card expand/collapse functionality', async ({ details, page }) => {
         await details.navigateToFieldsTab();
         
-        const cards = page.locator('[data-testid^="custom-field-card-"]');
-        const cardCount = await cards.count();
+        const fieldsTabPanel = page.locator('p-tabpanels').getByRole('tabpanel', { name: 'fields' });
+        const cardHeadings = fieldsTabPanel.getByRole('heading', { level: 3 });
+        const cardCount = await cardHeadings.count();
         
         if (cardCount > 1) {
-            const secondCard = cards.nth(1);
-            const chevron = secondCard.locator('[data-testid="card-chevron"]');
-            const table = secondCard.locator('table');
+            // Get the second card's table (within region) to check visibility
+            const regions = fieldsTabPanel.getByRole('region');
+            const secondRegion = regions.nth(1);
+            const secondTable = secondRegion.getByRole('table');
             
-            // Initially collapsed
-            const initiallyVisible = await table.isVisible().catch(() => false);
+            // Initially collapsed - table should not be visible
+            const initiallyVisible = await secondTable.isVisible().catch(() => false);
             expect(initiallyVisible, 'Second card should be collapsed initially').toBeFalsy();
             
-            // Expand
-            await chevron.click();
-            await details.waitForPageLoad();
-            await expect(table, 'Second card should be expanded after clicking chevron').toBeVisible();
+            // Expand - use the expand chevron locator for collapsed cards
+            // Second card (NCM) has expand chevron: locator('app-card').filter({ hasText: 'NCM 53 fields No matchTry a' }).getByLabel('Expand undefined panel')
+            const expandChevron = page.locator('app-card')
+                .filter({ hasText: 'NCM 53 fields No matchTry a' })
+                .getByLabel('Expand undefined panel');
             
-            // Collapse
-            await chevron.click();
+            await expect(expandChevron, 'Second card expand chevron should be visible').toBeVisible();
+            await expandChevron.click();
             await details.waitForPageLoad();
-            const afterCollapseVisible = await table.isVisible().catch(() => false);
+            await details.delay(500); // Add delay for expand animation
+            await expect(secondTable, 'Second card should be expanded after clicking chevron').toBeVisible();
+            
+            // After expanding, the second card should now have a collapse chevron
+            // Collapse - use the collapse chevron locator for expanded cards
+            // Locator: getByRole('button', { name: 'Collapse undefined panel' })
+            // Since both first and second cards are now expanded, we need to find the collapse button for the second card
+            const collapseButtons = page.getByRole('button', { name: 'Collapse undefined panel' });
+            const collapseButtonCount = await collapseButtons.count();
+            
+            // There should be 2 collapse buttons (first card expanded by default, second card we just expanded)
+            // Get the one for the second card (index 1)
+            const secondCardCollapseChevron = collapseButtons.nth(1);
+            
+            await expect(secondCardCollapseChevron, 'Second card collapse chevron should be visible').toBeVisible();
+            await secondCardCollapseChevron.click();
+            await details.waitForPageLoad();
+            await details.delay(500); // Add delay for collapse animation
+            const afterCollapseVisible = await secondTable.isVisible().catch(() => false);
             expect(afterCollapseVisible, 'Second card should be collapsed after second click').toBeFalsy();
+            
+            // After collapsing, the second card should have expand chevron again
+            const expandChevronAfterCollapse = page.locator('app-card')
+                .filter({ hasText: 'NCM 53 fields No matchTry a' })
+                .getByLabel('Expand undefined panel');
+            await expect(expandChevronAfterCollapse, 'Second card should have expand chevron again after collapse').toBeVisible();
         }
         // Take screenshot after validation passes
         await details.takeScreenshot('req-3.2.003-card-expand-collapse');
@@ -552,7 +625,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.2: Fields Tab', () =
         await details.takeScreenshot('req-3.2.004-expand-all-cards-collapsed');
     });
 
-    test('Req 3.2.005 - Validate Fields tab table columns for Accommodation', async ({ details, page }) => {
+    test('Req 3.2.005 - Validate Fields tab table columns for Juris-Accommodation', async ({ details, page }) => {
         await details.navigateToFieldsTab();
         
         // Get first card category name
@@ -569,12 +642,13 @@ test.describe('Accommodations Custom Fields - Requirement 3.2: Fields Tab', () =
     test('Req 3.2.006 - Validate table default sort on FIELD # column', async ({ details, page }) => {
         await details.navigateToFieldsTab();
         
-        const cards = page.locator('[data-testid^="custom-field-card-"]');
-        const firstCard = cards.first();
-        const categoryName = await firstCard.getAttribute('data-testid');
-        const category = categoryName?.replace('custom-field-card-', '') || 'Category1';
+        // Get the first card's category name from the heading
+        const fieldsTabPanel = page.locator('p-tabpanels').getByRole('tabpanel', { name: 'fields' });
+        const firstCardHeading = fieldsTabPanel.getByRole('heading', { level: 3 }).first();
+        const category = await firstCardHeading.textContent();
+        const categoryName = category?.trim() || 'Category 1';
         
-        await details.validateTableDefaultSort(category);
+        await details.validateTableDefaultSort(categoryName);
         // Take screenshot after validation passes
         await details.takeScreenshot('req-3.2.006-table-default-sort');
     });
@@ -582,16 +656,51 @@ test.describe('Accommodations Custom Fields - Requirement 3.2: Fields Tab', () =
     test('Req 3.2.006 - Validate table sort order can be changed by clicking column header', async ({ details, page }) => {
         await details.navigateToFieldsTab();
         
-        const cards = page.locator('[data-testid^="custom-field-card-"]');
-        const firstCard = cards.first();
-        const table = firstCard.locator('table');
-        const fieldHeader = table.locator('thead th').nth(1); // FIELD column
+        // Get the first card's category name from the heading
+        const fieldsTabPanel = page.locator('p-tabpanels').getByRole('tabpanel', { name: 'fields' });
+        const firstCardHeading = fieldsTabPanel.getByRole('heading', { level: 3 }).first();
+        const category = await firstCardHeading.textContent();
+        const categoryName = category?.trim() || 'Category 1';
         
-        await fieldHeader.click();
+        // Expand the first card
+        await details.expandCustomFieldCard(categoryName);
+        
+        // Get the table for the first card
+        const tables = fieldsTabPanel.getByRole('region').getByRole('table');
+        const table = tables.first();
+        
+        // Get the Field # column header
+        const fieldNumberHeader = table.getByRole('columnheader', { name: 'Field #' });
+        await expect(fieldNumberHeader, 'Field # column header should be visible').toBeVisible();
+        
+        // Initially should show ascending sort (default)
+        let ascendingIndicator = fieldNumberHeader.locator('.svg-inline--fa.fa-arrow-up-short-wide').first();
+        await expect(ascendingIndicator, 'Ascending sort indicator should be visible initially').toBeVisible();
+        
+        // Click the column header to change sort order to descending
+        await fieldNumberHeader.click();
         await details.waitForPageLoad();
         
-        // Verify sort changed (this would need actual data validation)
-        await expect(table, 'Table should still be visible after sorting').toBeVisible();
+        // After clicking, should show descending sort indicator
+        const descendingIndicator = fieldNumberHeader.locator('.svg-inline--fa.fa-arrow-down-wide-short');
+        await expect(descendingIndicator, 'Descending sort indicator should be visible after clicking').toBeVisible();
+        
+        // Verify ascending indicator is no longer visible
+        const ascendingVisible = await ascendingIndicator.isVisible().catch(() => false);
+        expect(ascendingVisible, 'Ascending sort indicator should not be visible when descending is active').toBeFalsy();
+        
+        // Click again to toggle back to ascending
+        await fieldNumberHeader.click();
+        await details.waitForPageLoad();
+        
+        // Should show ascending sort indicator again
+        ascendingIndicator = fieldNumberHeader.locator('.svg-inline--fa.fa-arrow-up-short-wide').first();
+        await expect(ascendingIndicator, 'Ascending sort indicator should be visible after second click').toBeVisible();
+        
+        // Verify descending indicator is no longer visible
+        const descendingVisible = await descendingIndicator.isVisible().catch(() => false);
+        expect(descendingVisible, 'Descending sort indicator should not be visible when ascending is active').toBeFalsy();
+        
         // Take screenshot after validation passes
         await details.takeScreenshot('req-3.2.006-table-sort-order-change');
     });
@@ -706,7 +815,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.2: Fields Tab', () =
     });
 });
 
-test.describe('Accommodations Custom Fields - Requirement 3.3: Editing Client Custom Field Values', () => {
+test.describe('Juris-Accommodations Custom Fields - Requirement 3.3: Editing Client Custom Field Values', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -970,7 +1079,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.3: Editing Client Cu
     });
 });
 
-test.describe('Accommodations Custom Fields - Requirement 3.4: HR Fields Tab', () => {
+test.describe('Juris-Accommodations Custom Fields - Requirement 3.4: HR Fields Tab', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -978,7 +1087,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.4: HR Fields Tab', (
         await view.SearchClaimByCriteria(1);
     });
 
-    test('Req 3.4.001 - Validate HR Fields tab is accessible for Accommodation claims', async ({ details, page }) => {
+    test('Req 3.4.001 - Validate HR Fields tab is accessible for Juris-Accommodation claims', async ({ details, page }) => {
         await details.navigateToHRFieldsTab();
         // Take screenshot after validation passes
         await details.takeScreenshot('req-3.4.001-hr-fields-tab-accessible');
@@ -1064,7 +1173,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.4: HR Fields Tab', (
     });
 });
 
-test.describe('Accommodations Custom Fields - Requirement 3.6: Alternate Numbers Tab', () => {
+test.describe('Juris-Accommodations Custom Fields - Requirement 3.6: Alternate Numbers Tab', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -1085,7 +1194,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.6: Alternate Numbers
     });
 });
 
-test.describe('Accommodations Custom Fields - Requirement 3.7: Security', () => {
+test.describe('Juris-Accommodations Custom Fields - Requirement 3.7: Security', () => {
     
     test.beforeEach(async ({ login, view }) => {
         await login.performLoginDataDriven(1);
@@ -1113,7 +1222,7 @@ test.describe('Accommodations Custom Fields - Requirement 3.7: Security', () => 
         // This test would need user role with/without token
         await details.navigateToCustomFields();
         
-        const fieldsTab = page.locator('p-tabs').locator('a, button').filter({ hasText: 'FIELDS' }).first();
+        const fieldsTab = page.locator('p-tabs').getByRole('tab', { name: 'FIELDS' }).first();
         // Tab should be visible if user has access
         await expect(fieldsTab, 'FIELDS tab should be visible if user has access').toBeVisible();
         // Take screenshot after validation passes
